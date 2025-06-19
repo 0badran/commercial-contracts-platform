@@ -88,7 +88,7 @@ export default function RiskAssessmentTab({ contracts, onOpenDecisionDialog }: R
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Retailers Risk List */}
       <div className="lg:col-span-1">
-        <Card className="card-hover bg-card/50 backdrop-blur-sm border-border/50">
+        <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
           <CardHeader>
             <CardTitle>تقييم مخاطر التجار</CardTitle>
             <CardDescription>اختر تاجراً لعرض تقييم المخاطر</CardDescription>
@@ -111,7 +111,7 @@ export default function RiskAssessmentTab({ contracts, onOpenDecisionDialog }: R
                     key={retailer.id}
                     className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
                       selectedRetailer === retailer.id
-                        ? "border-primary bg-primary/5 shadow-sm"
+                        ? "border-primary bg-primary/5 shadow-xs"
                         : "border-border hover:border-border/80 hover:bg-accent/50"
                     }`}
                     onClick={() => setSelectedRetailer(retailer.id)}
@@ -142,7 +142,7 @@ export default function RiskAssessmentTab({ contracts, onOpenDecisionDialog }: R
       {/* Risk Analysis */}
       <div className="lg:col-span-2">
         {selectedRetailer ? (
-          <Card className="card-hover bg-card/50 backdrop-blur-sm border-border/50">
+          <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
@@ -174,7 +174,7 @@ export default function RiskAssessmentTab({ contracts, onOpenDecisionDialog }: R
                   <div className="space-y-6">
                     {/* Risk Score */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+                      <Card className="bg-linear-to-br from-blue-50 to-blue-100">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm text-blue-800">التصنيف الائتماني</CardTitle>
                         </CardHeader>
@@ -194,7 +194,7 @@ export default function RiskAssessmentTab({ contracts, onOpenDecisionDialog }: R
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-gradient-to-br from-green-50 to-green-100">
+                      <Card className="bg-linear-to-br from-green-50 to-green-100">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm text-green-800">العقود النشطة</CardTitle>
                         </CardHeader>
@@ -209,7 +209,7 @@ export default function RiskAssessmentTab({ contracts, onOpenDecisionDialog }: R
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+                      <Card className="bg-linear-to-br from-purple-50 to-purple-100">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm text-purple-800">متوسط قيمة العقد</CardTitle>
                         </CardHeader>
@@ -383,7 +383,7 @@ export default function RiskAssessmentTab({ contracts, onOpenDecisionDialog }: R
             </CardContent>
           </Card>
         ) : (
-          <Card className="card-hover bg-card/50 backdrop-blur-sm border-border/50">
+          <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
             <CardContent className="flex items-center justify-center h-64">
               <div className="text-center">
                 <FileBarChart className="h-12 w-12 text-gray-400 mx-auto mb-4" />

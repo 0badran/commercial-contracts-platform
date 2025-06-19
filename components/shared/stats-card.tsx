@@ -17,7 +17,7 @@ export default function StatsCard({
   value,
   subtitle,
   icon: Icon,
-  gradient = "bg-gradient-to-br from-card to-card/80 border-border/50",
+  gradient = "bg-linear-to-br from-card to-card/80 border-border/50",
   textColor = "text-muted-foreground",
 }: StatsCardProps) {
   return (

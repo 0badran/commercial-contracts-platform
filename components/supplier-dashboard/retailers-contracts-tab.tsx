@@ -123,7 +123,7 @@ export default function RetailersContractsTab({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Retailers List */}
       <div className="lg:col-span-1">
-        <Card className="card-hover bg-card/50 backdrop-blur-sm border-border/50">
+        <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
           <CardHeader>
             <CardTitle>قائمة التجار</CardTitle>
             <CardDescription>ابحث عن التاجر لعرض عقوده الحالية</CardDescription>
@@ -157,7 +157,7 @@ export default function RetailersContractsTab({
                     key={retailer.id}
                     className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
                       selectedRetailer === retailer.id
-                        ? "border-primary bg-primary/5 shadow-sm"
+                        ? "border-primary bg-primary/5 shadow-xs"
                         : "border-border hover:border-border/80 hover:bg-accent/50"
                     }`}
                     onClick={() => setSelectedRetailer(retailer.id)}
@@ -201,7 +201,7 @@ export default function RetailersContractsTab({
       {/* Contracts Details */}
       <div className="lg:col-span-2">
         {selectedRetailer ? (
-          <Card className="card-hover bg-card/50 backdrop-blur-sm border-border/50">
+          <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
@@ -260,7 +260,7 @@ export default function RetailersContractsTab({
             </CardContent>
           </Card>
         ) : (
-          <Card className="card-hover bg-card/50 backdrop-blur-sm border-border/50">
+          <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
             <CardContent className="flex items-center justify-center h-64">
               <div className="text-center">
                 <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />

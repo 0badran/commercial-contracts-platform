@@ -10,7 +10,7 @@ export default function OverviewTab() {
     <div className="space-y-6">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="card-hover bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="card-hover bg-linear-to-br from-blue-500 to-blue-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">إجمالي التجار</CardTitle>
             <Store className="h-4 w-4" />
@@ -21,7 +21,7 @@ export default function OverviewTab() {
           </CardContent>
         </Card>
 
-        <Card className="card-hover bg-gradient-to-br from-green-500 to-green-600 text-white">
+        <Card className="card-hover bg-linear-to-br from-green-500 to-green-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">إجمالي الموردين</CardTitle>
             <Building2 className="h-4 w-4" />
@@ -32,7 +32,7 @@ export default function OverviewTab() {
           </CardContent>
         </Card>
 
-        <Card className="card-hover bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+        <Card className="card-hover bg-linear-to-br from-purple-500 to-purple-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">إجمالي العقود</CardTitle>
             <FileText className="h-4 w-4" />
@@ -43,7 +43,7 @@ export default function OverviewTab() {
           </CardContent>
         </Card>
 
-        <Card className="card-hover bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+        <Card className="card-hover bg-linear-to-br from-orange-500 to-orange-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">القيمة الإجمالية</CardTitle>
             <DollarSign className="h-4 w-4" />

@@ -31,7 +31,7 @@ export default function PendingContractsTab({ contracts, setContracts, currentSu
   const pendingContracts = getPendingContracts()
 
   return (
-    <Card className="card-hover bg-card/50 backdrop-blur-sm border-border/50">
+    <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
