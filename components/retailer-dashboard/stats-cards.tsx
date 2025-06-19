@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { usePayments } from "@/lib/hooks/use-payments";
+import { usePayments } from "@/hooks/use-payments";
 import { User } from "@supabase/supabase-js";
 import {
   AlertCircle,
@@ -41,7 +41,7 @@ export default function StatsCards({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-      <Card className="card-hover bg-gradient-to-br from-card to-card/80 border-border/50">
+      <Card className="card-hover bg-linear-to-br from-card to-card/80 border-border/50">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">العقود النشطة</CardTitle>
           <FileText className="h-4 w-4 text-muted-foreground" />
@@ -52,7 +52,7 @@ export default function StatsCards({
         </CardContent>
       </Card>
 
-      <Card className="card-hover bg-gradient-to-br from-card to-card/80 border-border/50">
+      <Card className="card-hover bg-linear-to-br from-card to-card/80 border-border/50">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
             بانتظار الموافقة
@@ -65,7 +65,7 @@ export default function StatsCards({
         </CardContent>
       </Card>
 
-      <Card className="card-hover bg-gradient-to-br from-card to-card/80 border-border/50">
+      <Card className="card-hover bg-linear-to-br from-card to-card/80 border-border/50">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">إجمالي المبالغ</CardTitle>
           <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -78,7 +78,7 @@ export default function StatsCards({
         </CardContent>
       </Card>
 
-      <Card className="card-hover bg-gradient-to-br from-green-500 to-green-600 text-white">
+      <Card className="card-hover bg-linear-to-br from-green-500 to-green-600 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">المدفوع</CardTitle>
           <CheckCircle className="h-4 w-4" />
@@ -89,7 +89,7 @@ export default function StatsCards({
         </CardContent>
       </Card>
 
-      <Card className="card-hover bg-gradient-to-br from-red-500 to-red-600 text-white">
+      <Card className="card-hover bg-linear-to-br from-red-500 to-red-600 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">متأخرات</CardTitle>
           <AlertCircle className="h-4 w-4" />

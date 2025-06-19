@@ -15,7 +15,7 @@ export function LoadingSpinner({ message = "جاري التحميل...", size = 
   }
 
   return (
-    <Card className="card-hover bg-card/50 backdrop-blur-sm border-border/50">
+    <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
       <CardContent className="flex items-center justify-center h-64">
         <div className="text-center">
           <div

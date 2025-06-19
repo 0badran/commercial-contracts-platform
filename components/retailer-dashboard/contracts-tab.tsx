@@ -35,8 +35,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { useContracts } from "@/lib/hooks/use-contracts";
-import { useUsers } from "@/lib/hooks/use-users";
+import { useContracts } from "@/hooks/use-contracts";
+import { useUsers } from "@/hooks/use-users";
 import { User } from "@supabase/supabase-js";
 import { Plus, Search, Store } from "lucide-react";
 import { FormEvent, useState } from "react";
@@ -135,7 +135,7 @@ export default function ContractsTab({ user }: ContractsTabProps) {
   };
 
   return (
-    <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+    <Card className="bg-card/50 backdrop-blur-xs border-border/50 shadow-lg">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>

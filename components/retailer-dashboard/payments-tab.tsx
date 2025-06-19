@@ -16,9 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useContracts } from "@/lib/hooks/use-contracts";
-import { usePayments } from "@/lib/hooks/use-payments";
-import { useUsers } from "@/lib/hooks/use-users";
+import { useContracts } from "@/hooks/use-contracts";
+import { usePayments } from "@/hooks/use-payments";
+import { useUsers } from "@/hooks/use-users";
 import {
   AlertCircle,
   Calendar,
@@ -173,7 +173,7 @@ export default function PaymentsTab() {
       )}
 
       {/* Payment History */}
-      <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+      <Card className="bg-card/50 backdrop-blur-xs border-border/50 shadow-lg">
         <CardHeader>
           <CardTitle>سجل السداد</CardTitle>
           <CardDescription>جميع المدفوعات والدفعات المستحقة</CardDescription>

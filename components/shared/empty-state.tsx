@@ -14,7 +14,7 @@ interface EmptyStateProps {
 
 export default function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
   return (
-    <Card className="card-hover bg-card/50 backdrop-blur-sm border-border/50">
+    <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
       <CardContent className="flex items-center justify-center h-64">
         <div className="text-center">
           <Icon className="h-12 w-12 text-gray-400 mx-auto mb-4" />

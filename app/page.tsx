@@ -53,7 +53,7 @@ export default function LoginPage({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-indigo-100 flex-col gap-10 flex items-center justify-center p-4 supports-[backdrop-filter]:backdrop-blur-sm">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-indigo-100 flex-col gap-10 flex items-center justify-center p-4 supports-backdrop-filter:backdrop-blur-xs">
       {email && (
         <div className="max-w-lg">
           <CustomAlert
@@ -72,7 +72,7 @@ export default function LoginPage({
           </p>
         </div>
 
-        <Card className="card-hover shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+        <Card className="card-hover shadow-lg border-0 bg-white/80 backdrop-blur-xs">
           <CardHeader>
             <CardTitle className="text-center">تسجيل الدخول</CardTitle>
             <CardDescription className="text-center">
