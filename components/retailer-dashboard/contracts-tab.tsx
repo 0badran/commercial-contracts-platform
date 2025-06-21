@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -42,28 +41,12 @@ import { Plus, Search, Store } from "lucide-react";
 import { FormEvent, useState } from "react";
 import CustomAlert from "../shared/custom-alert";
 import Spinner from "../shared/spinner";
+import StatusBadge from "../shared/status-badge";
 import ContractTabSkelton from "../skelton/contract-tab-skelton";
 
 interface ContractsTabProps {
   user: User | null;
 }
-
-const getStatusBadge = (status: Database["contract"]["status"]) => {
-  switch (status) {
-    case "active":
-      return <Badge className="bg-green-100 text-green-800">نشط</Badge>;
-    case "pending":
-      return (
-        <Badge className="bg-blue-100 text-blue-800">بانتظار الموافقة</Badge>
-      );
-    case "rejected":
-      return <Badge className="bg-red-100 text-red-800">مرفوض</Badge>;
-    case "completed":
-      return <Badge variant="secondary">منتهي</Badge>;
-    default:
-      return <Badge variant="secondary">{status}</Badge>;
-  }
-};
 
 export default function ContractsTab({ user }: ContractsTabProps) {
   const [supplierSearch, setSupplierSearch] = useState("");
@@ -123,6 +106,7 @@ export default function ContractsTab({ user }: ContractsTabProps) {
       payment_terms: newContract.paymentTerms,
       description: newContract.description,
       number_of_payments: numberOfPayments,
+      due_date: newContract.endDate,
     });
     if (error) {
       setMessages({ message: "حدث خطأ أثناء إضافة العقد.", stats: "error" });
@@ -211,7 +195,10 @@ export default function ContractsTab({ user }: ContractsTabProps) {
                           }
                           return filteredSuppliers(suppliers).map(
                             (supplier) => (
-                              <SelectItem key={supplier.id} value={supplier.id}>
+                              <SelectItem
+                                key={supplier.id}
+                                value={supplier.id!}
+                              >
                                 <div className="flex items-center justify-between w-full">
                                   <div className="flex items-center">
                                     <span>{supplier.commercial_name}</span>
@@ -411,7 +398,9 @@ export default function ContractsTab({ user }: ContractsTabProps) {
                     <TableCell>{contract.number_of_payments}</TableCell>
                     <TableCell>{contract.start_date}</TableCell>
                     <TableCell>{contract.end_date}</TableCell>
-                    <TableCell>{getStatusBadge(contract.status)}</TableCell>
+                    <TableCell>
+                      {<StatusBadge status={contract.status!} />}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

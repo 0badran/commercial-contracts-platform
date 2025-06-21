@@ -1,83 +1,134 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 import { useCallback, useEffect, useState } from "react";
-import useUser from "./use-user";
 
 type Contract = Database["contract"];
 
-export function useContracts() {
-  const [contracts, setContracts] = useState<Contract[]>([]);
+export function useContracts(haveContracts?: Contract[]) {
+  const [contracts, setContracts] = useState<Contract[]>(haveContracts || []);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useUser();
   const supabase = createClient();
 
   const fetchContracts = useCallback(async () => {
-    const userId = user?.id;
-    const userType: UserType = user?.user_metadata.user_type;
     setLoading(true);
     setError(null);
-    const { data } = await supabase
+
+    const { data, error: fetchError } = await supabase
       .from("contracts")
       .select("*")
-      .eq(`${userType}_id`, userId)
       .order("created_at", { ascending: false });
 
     setLoading(false);
 
-    if (error) {
-      return setError(error);
+    if (fetchError) {
+      setError(fetchError.message);
+      return { data: [], error: fetchError };
     }
     setContracts(data || []);
-    // eslint-disable-next-line
-  }, [error, supabase]);
+
+    // Fetch current user
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    setCurrentUser(user);
+    return { data: data || [], error: null };
+  }, [supabase]);
 
   useEffect(() => {
-    fetchContracts();
-  }, [fetchContracts]);
+    if (!haveContracts) {
+      fetchContracts();
+    }
+  }, [fetchContracts, haveContracts]);
 
-  const createContract = async (contract: Contract) => {
-    const { data, error } = await supabase
+  // Create
+  const createContract = async (
+    contract: Omit<Contract, "id" | "created_at" | "updated_at">
+  ) => {
+    const { data, error: insertError } = await supabase
       .from("contracts")
       .insert(contract)
       .select()
       .single();
 
-    if (error) return { error, data: null };
+    if (insertError) {
+      return { data: null, error: insertError };
+    }
 
-    setContracts((prev) => [data, ...prev]);
+    setContracts((prev) => (data ? [data, ...prev] : prev));
     return { data, error: null };
   };
 
-  const updateContract = async (id: string, updates: Contract) => {
-    try {
-      const { data, error } = await supabase
-        .from("contracts")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
+  // Update
+  const updateContract = async (
+    id: string,
+    updates: Partial<Omit<Contract, "id" | "created_at" | "updated_at">>
+  ) => {
+    const { data, error: updateError } = await supabase
+      .from("contracts")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
 
-      if (error) throw error;
-
-      setContracts((prev) =>
-        prev.map((contract) => (contract.id === id ? data : contract))
-      );
-      return data;
-    } catch (err) {
-      throw new Error(
-        err instanceof Error ? err.message : "حدث خطأ في تحديث العقد"
-      );
+    if (updateError) {
+      return { data: null, error: updateError };
     }
+
+    setContracts((prev) => prev.map((c) => (c.id === id && data ? data : c)));
+    return { data, error: null };
+  };
+
+  const getCurrentUserContracts = () => {
+    if (!currentUser) {
+      return { data: null, error: new Error("حدث خطا في جلب العقود: User ID") };
+    }
+
+    const data = contracts.filter(
+      (c) =>
+        c.supplier_id === currentUser.id || c.retailer_id === currentUser.id
+    );
+
+    if (!data.length) {
+      return {
+        data: null,
+        error: new Error("حدث خطا في جلب العقود: Contracts List"),
+      };
+    }
+    return { data, error: null };
+  };
+
+  const getContractsByUserId = (userId: string) => {
+    if (!userId) {
+      return { data: null, error: new Error("حدث خطا في جلب العقود: User ID") };
+    }
+
+    const data = contracts.filter(
+      (c) => c.supplier_id === userId || c.retailer_id === userId
+    );
+
+    if (!data.length) {
+      return {
+        data: null,
+        error: new Error("حدث خطا في جلب العقود: Contracts List"),
+      };
+    }
+
+    return { data, error: null };
   };
 
   return {
     contracts,
     loading,
     error,
+    fetchContracts,
     createContract,
     updateContract,
-    refetch: fetchContracts,
+    getCurrentUserContracts,
+    getContractsByUserId,
   };
 }

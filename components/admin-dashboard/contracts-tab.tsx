@@ -1,37 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Edit, Eye, Search } from "lucide-react"
-import { allContracts } from "@/data/users"
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { allContracts } from "@/data/users";
+import { Edit, Eye, Search } from "lucide-react";
+import { useState } from "react";
+import StatusBadge from "../shared/status-badge";
 
 export default function ContractsTab() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState("");
 
   const filteredContracts = allContracts.filter(
     (contract) =>
       contract.retailerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contract.supplierName.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "نشط":
-        return <Badge className="bg-green-100 text-green-800">نشط</Badge>
-      case "بانتظار الموافقة":
-        return <Badge className="bg-blue-100 text-blue-800">بانتظار الموافقة</Badge>
-      case "مرفوض":
-        return <Badge className="bg-red-100 text-red-800">مرفوض</Badge>
-      case "منتهي":
-        return <Badge variant="secondary">منتهي</Badge>
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
-  }
+      contract.supplierName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -70,13 +62,17 @@ export default function ContractsTab() {
             <TableBody>
               {filteredContracts.map((contract) => (
                 <TableRow key={contract.id}>
-                  <TableCell className="font-medium">{contract.retailerName}</TableCell>
+                  <TableCell className="font-medium">
+                    {contract.retailerName}
+                  </TableCell>
                   <TableCell>{contract.supplierName}</TableCell>
                   <TableCell>{contract.amount.toLocaleString()} ر.س</TableCell>
                   <TableCell>{contract.startDate}</TableCell>
                   <TableCell>{contract.endDate}</TableCell>
                   <TableCell>{contract.paymentTerms}</TableCell>
-                  <TableCell>{getStatusBadge(contract.status)}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={contract.status} />
+                  </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button size="sm" variant="outline">
@@ -94,5 +90,5 @@ export default function ContractsTab() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,9 +1,9 @@
-import { getUser } from "@/app/actions";
 import StatsCards from "@/components/retailer-dashboard/stats-cards";
 import TabsContainer from "@/components/retailer-dashboard/tabs-container";
 import SignoutButton from "@/components/shared/signout-button";
 import StatsCardSkelton from "@/components/skelton/stats-card-skelton";
 import { createClient } from "@/lib/supabase/server";
+import getUser from "@/services/get-user";
 import { Store } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

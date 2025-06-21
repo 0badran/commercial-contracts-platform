@@ -14,6 +14,7 @@ export default function TabsContainer({ user }: Props) {
   );
   return (
     <Tabs
+      dir="rtl"
       value={activeTab}
       onValueChange={(value) => setActiveTab(value as "contracts" | "payments")}
     >
