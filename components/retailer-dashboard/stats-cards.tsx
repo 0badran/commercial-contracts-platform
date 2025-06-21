@@ -31,7 +31,7 @@ export default function StatsCards({
   // Payment calculations
   const totalPaid = payments
     .filter((p) => p.status === "paid")
-    .reduce((sum, payment) => sum + (payment.paid_amount || 0), 0);
+    .reduce((sum, payment) => sum + (payment.amount_paid || 0), 0);
 
   const overduePayments = payments.filter((p) => {
     const dueDate = new Date(p.due_date);

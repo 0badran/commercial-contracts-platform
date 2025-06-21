@@ -1,204 +1,186 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import RiskIcon from "@/components/shared/risk-icon";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import { Search, TrendingUp, TrendingDown, Minus, Eye, FileText, FileBarChart, CreditCard } from "lucide-react"
-import { retailers } from "@/data/users"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { useContracts } from "@/hooks/use-contracts";
+import { useCreditInfo } from "@/hooks/use-credit-info";
+import { getCreditRatingColor } from "@/lib/utils";
+import {
+  CreditCard,
+  Eye,
+  EyeOff,
+  FileBarChart,
+  FileText,
+  Search,
+} from "lucide-react";
+import { useState } from "react";
+import EmptyState from "../shared/empty-state";
+import SearchUsersInput from "../shared/search-users-input";
+import StatusBadge from "../shared/status-badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { useUsers } from "@/hooks/use-users";
 
-interface RetailersContractsTabProps {
-  contracts: any[]
-  setContracts: (contracts: any[]) => void
-  currentSupplierId: number
-}
+export default function RetailersContractsTab() {
+  const [filteredRetailers, setFilteredRetailers] = useState<
+    Database["user"][]
+  >([]);
 
-export default function RetailersContractsTab({
-  contracts,
-  setContracts,
-  currentSupplierId,
-}: RetailersContractsTabProps) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [searchType, setSearchType] = useState<"name" | "registerNumber">("name")
-  const [selectedRetailer, setSelectedRetailer] = useState<number | null>(null)
-  const [isDecisionDialogOpen, setIsDecisionDialogOpen] = useState(false)
+  const [selectedRetailer, setSelectedRetailer] = useState<
+    Database["user"] | null
+  >(null);
+
+  const [isDecisionDialogOpen, setIsDecisionDialogOpen] = useState(false);
+
   const [decisionData, setDecisionData] = useState({
-    retailerId: 0,
+    retailerId: "",
     retailerName: "",
-    decision: "" as "approve" | "reject" | "moreInfo",
+    decision: "approve" as "approve" | "reject" | "moreInfo",
     notes: "",
     facilityAmount: "",
-  })
+  });
 
-  // Filter retailers based on search term and type
-  const filteredRetailers = retailers.filter((retailer) => {
-    if (searchType === "name") {
-      return retailer.name.toLowerCase().includes(searchTerm.toLowerCase())
-    } else {
-      const registerNumber = `CR-${retailer.id}${retailer.id}${retailer.id}${retailer.id}`
-      return registerNumber.includes(searchTerm)
-    }
-  })
+  // Retailer credit info
+  const { creditInfo } = useCreditInfo(selectedRetailer?.id as string);
 
-  const getRetailerContracts = (retailerId: number) => {
-    return contracts.filter((contract) => contract.retailerId === retailerId)
+  const { getUsersContractedWithCurrentUser } = useUsers();
+  const { getCurrentUserContracts } = useContracts();
+
+  const { data: contracts } = getCurrentUserContracts();
+
+  // Check the supplier's have contracts
+  if (!contracts) {
+    return (
+      <EmptyState
+        title="لا يوجد تجار بعد"
+        description="تفاصيل العقود فارغه"
+        icon={EyeOff}
+      />
+    );
+  }
+  const retailers = getUsersContractedWithCurrentUser(contracts);
+
+  if (retailers) {
+    setFilteredRetailers(retailers);
   }
 
-  const handleOpenDecisionDialog = (retailerId: number, retailerName: string) => {
+  const handleOpenDecisionDialog = (
+    retailerId: string,
+    retailerName: string
+  ) => {
     setDecisionData({
       retailerId,
       retailerName,
       decision: "approve",
       notes: "",
       facilityAmount: "",
-    })
-    setIsDecisionDialogOpen(true)
-  }
+    });
+    setIsDecisionDialogOpen(true);
+  };
 
   const handleSubmitDecision = () => {
-    console.log("Decision submitted:", decisionData)
-    setIsDecisionDialogOpen(false)
+    console.log("Decision submitted:", decisionData);
+    setIsDecisionDialogOpen(false);
     alert(
       `تم حفظ القرار بنجاح: ${
         decisionData.decision === "approve"
           ? "منح تسهيلات"
           : decisionData.decision === "reject"
-            ? "رفض"
-            : "طلب بيانات إضافية"
-      }`,
-    )
-  }
-
-  const getCreditRatingColor = (rating: string) => {
-    switch (rating) {
-      case "A":
-        return "bg-green-100 text-green-800"
-      case "B":
-        return "bg-blue-100 text-blue-800"
-      case "C":
-        return "bg-yellow-100 text-yellow-800"
-      case "D":
-        return "bg-orange-100 text-orange-800"
-      case "E":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getRiskIcon = (risk: string) => {
-    if (risk === "منخفض جداً") return <TrendingUp className="h-4 w-4 text-green-600" />
-    if (risk === "منخفض") return <TrendingUp className="h-4 w-4 text-blue-600" />
-    if (risk === "متوسط") return <Minus className="h-4 w-4 text-yellow-600" />
-    if (risk === "مرتفع") return <TrendingDown className="h-4 w-4 text-orange-600" />
-    return <TrendingDown className="h-4 w-4 text-red-600" />
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "نشط":
-        return <Badge className="bg-green-100 text-green-800">نشط</Badge>
-      case "بانتظار الموافقة":
-        return <Badge className="bg-blue-100 text-blue-800">بانتظار الموافقة</Badge>
-      case "مرفوض":
-        return <Badge className="bg-red-100 text-red-800">مرفوض</Badge>
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
-  }
+          ? "رفض"
+          : "طلب بيانات إضافية"
+      }`
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* Retailers List */}
       <div className="lg:col-span-1">
-        <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
-          <CardHeader>
-            <CardTitle>قائمة التجار</CardTitle>
-            <CardDescription>ابحث عن التاجر لعرض عقوده الحالية</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Select value={searchType} onValueChange={(value) => setSearchType(value as "name" | "registerNumber")}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="نوع البحث" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">الاسم</SelectItem>
-                    <SelectItem value="registerNumber">رقم السجل</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder={searchType === "name" ? "ابحث عن التاجر..." : "أدخل رقم السجل التجاري..."}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+        <SearchUsersInput
+          title="قائمة التجار"
+          des="ابحث عن التاجر لعرض عقوده الحالية"
+          userType="retailer"
+          users={filteredRetailers}
+          setUsers={setFilteredRetailers}
+        />
+
+        <div className="space-y-2">
+          {filteredRetailers.map((retailer) => (
+            <div
+              key={retailer.id}
+              className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+                selectedRetailer?.id === retailer.id
+                  ? "border-primary bg-primary/5 shadow-xs"
+                  : "border-border hover:border-border/80 hover:bg-accent/50"
+              }`}
+              onClick={() => setSelectedRetailer(retailer)}
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-medium text-sm">{retailer.full_name}</h3>
+                  <p className="text-xs text-gray-600 mt-1">
+                    عقود {creditInfo?.total_contracts} •{" "}
+                    {creditInfo?.paid_amount!.toLocaleString()} ر.س
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    رقم السجل: CR-{retailer.commercial_identity_number}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Badge
+                    className={getCreditRatingColor(creditInfo?.credit_rating)}
+                  >
+                    {creditInfo?.credit_rating}
+                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <RiskIcon risk={creditInfo?.risk_level} />
+                    <span className="text-xs">{creditInfo?.risk_level}</span>
+                  </div>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                {filteredRetailers.map((retailer) => (
-                  <div
-                    key={retailer.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
-                      selectedRetailer === retailer.id
-                        ? "border-primary bg-primary/5 shadow-xs"
-                        : "border-border hover:border-border/80 hover:bg-accent/50"
-                    }`}
-                    onClick={() => setSelectedRetailer(retailer.id)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium text-sm">{retailer.name}</h3>
-                        <p className="text-xs text-gray-600 mt-1">
-                          {retailer.totalContracts} عقود • {retailer.totalAmount.toLocaleString()} ر.س
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          رقم السجل: CR-{retailer.id}
-                          {retailer.id}
-                          {retailer.id}
-                          {retailer.id}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <Badge className={getCreditRatingColor(retailer.creditRating)}>{retailer.creditRating}</Badge>
-                        <div className="flex items-center gap-1">
-                          {getRiskIcon(retailer.riskLevel)}
-                          <span className="text-xs">{retailer.riskLevel}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {filteredRetailers.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>لم يتم العثور على نتائج</p>
-                  </div>
-                )}
-              </div>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+
+          {filteredRetailers.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>لم يتم العثور على نتائج</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Contracts Details */}
+      {/* Contracts Section */}
       <div className="lg:col-span-2">
         {selectedRetailer ? (
           <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
@@ -207,15 +189,20 @@ export default function RetailersContractsTab({
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    عقود {retailers.find((r) => r.id === selectedRetailer)?.name}
+                    عقود{" "}
+                    {
+                      filteredRetailers.find(
+                        (r) => r.id === selectedRetailer.id
+                      )?.full_name
+                    }
                   </CardTitle>
                   <CardDescription>العقود الحالية مع الموردين</CardDescription>
                 </div>
                 <Button
                   onClick={() =>
                     handleOpenDecisionDialog(
-                      selectedRetailer,
-                      retailers.find((r) => r.id === selectedRetailer)?.name || "",
+                      selectedRetailer.id as string,
+                      selectedRetailer.full_name
                     )
                   }
                   className="flex items-center gap-1"
@@ -229,7 +216,6 @@ export default function RetailersContractsTab({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>المورد</TableHead>
                     <TableHead>المبلغ</TableHead>
                     <TableHead>تاريخ البداية</TableHead>
                     <TableHead>تاريخ الانتهاء</TableHead>
@@ -238,20 +224,23 @@ export default function RetailersContractsTab({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {getRetailerContracts(selectedRetailer).map((contract) => (
+                  {contracts?.map((contract) => (
                     <TableRow key={contract.id}>
-                      <TableCell className="font-medium">{contract.supplierName}</TableCell>
-                      <TableCell>{contract.amount.toLocaleString()} ر.س</TableCell>
-                      <TableCell>{contract.startDate}</TableCell>
-                      <TableCell>{contract.endDate}</TableCell>
-                      <TableCell>{contract.paymentTerms}</TableCell>
-                      <TableCell>{getStatusBadge(contract.status)}</TableCell>
+                      <TableCell>
+                        {contract.amount.toLocaleString()} ر.س
+                      </TableCell>
+                      <TableCell>{contract.start_date}</TableCell>
+                      <TableCell>{contract.end_date}</TableCell>
+                      <TableCell>{contract.payment_terms}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={contract.status!} />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
 
-              {getRetailerContracts(selectedRetailer).length === 0 && (
+              {contracts?.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>لا توجد عقود لهذا التاجر</p>
@@ -264,21 +253,29 @@ export default function RetailersContractsTab({
             <CardContent className="flex items-center justify-center h-64">
               <div className="text-center">
                 <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">اختر تاجراً لعرض عقوده</h3>
-                <p className="text-gray-600">اختر تاجراً من القائمة لعرض عقوده الحالية مع الموردين</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  اختر تاجراً لعرض عقوده
+                </h3>
+                <p className="text-gray-600">
+                  اختر تاجراً من القائمة لعرض عقوده الحالية مع الموردين
+                </p>
               </div>
             </CardContent>
           </Card>
         )}
       </div>
 
-      {/* Decision Dialog */}
-      <Dialog open={isDecisionDialogOpen} onOpenChange={setIsDecisionDialogOpen}>
+      {/* Dialog */}
+      <Dialog
+        open={isDecisionDialogOpen}
+        onOpenChange={setIsDecisionDialogOpen}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>اتخاذ قرار بشأن التاجر</DialogTitle>
             <DialogDescription>
-              {decisionData.retailerName} - اتخذ قراراً بشأن منح التسهيلات أو طلب بيانات إضافية
+              {decisionData.retailerName} - اتخذ قراراً بشأن منح التسهيلات أو
+              طلب بيانات إضافية
             </DialogDescription>
           </DialogHeader>
 
@@ -315,11 +312,15 @@ export default function RetailersContractsTab({
                   <span>قيمة التسهيلات (ر.س)</span>
                 </div>
                 <Input
-                  id="facilityAmount"
                   type="number"
                   placeholder="أدخل قيمة التسهيلات"
                   value={decisionData.facilityAmount}
-                  onChange={(e) => setDecisionData({ ...decisionData, facilityAmount: e.target.value })}
+                  onChange={(e) =>
+                    setDecisionData({
+                      ...decisionData,
+                      facilityAmount: e.target.value,
+                    })
+                  }
                 />
               </div>
             )}
@@ -330,16 +331,20 @@ export default function RetailersContractsTab({
                 <span>ملاحظات</span>
               </div>
               <Textarea
-                id="notes"
                 placeholder="أدخل ملاحظات إضافية حول القرار"
                 value={decisionData.notes}
-                onChange={(e) => setDecisionData({ ...decisionData, notes: e.target.value })}
+                onChange={(e) =>
+                  setDecisionData({ ...decisionData, notes: e.target.value })
+                }
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDecisionDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDecisionDialogOpen(false)}
+            >
               إلغاء
             </Button>
             <Button onClick={handleSubmitDecision}>حفظ القرار</Button>
@@ -347,5 +352,5 @@ export default function RetailersContractsTab({
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

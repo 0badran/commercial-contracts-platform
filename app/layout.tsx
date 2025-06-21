@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 
 const noto_sans_arabic = Noto_Sans_Arabic({ subsets: ["arabic"] });
 
@@ -16,7 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={noto_sans_arabic.className}>{children}</body>
+      <body className={noto_sans_arabic.className}>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }
