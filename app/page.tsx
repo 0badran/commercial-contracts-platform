@@ -20,7 +20,7 @@ import {
   Store,
 } from "lucide-react";
 import Link from "next/link";
-import { use, useState } from "react";
+import { FormEvent, use, useState } from "react";
 import { signin } from "./actions";
 
 export default function LoginPage({
@@ -34,7 +34,8 @@ export default function LoginPage({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     const isFormValidate = () => credentials.email && credentials.password;
 
     if (!isFormValidate()) {
@@ -108,62 +109,69 @@ export default function LoginPage({
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value={userType} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="supplier-email">البريد الإلكتروني</Label>
-                  <Input
-                    id="supplier-email"
-                    type="email"
-                    placeholder="أدخل البريد الإلكتروني"
-                    value={credentials.email}
-                    onChange={(e) =>
-                      setCredentials({ ...credentials, email: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="supplier-password">كلمة المرور</Label>
-                  <Input
-                    id="supplier-password"
-                    type="password"
-                    placeholder="أدخل كلمة المرور"
-                    value={credentials.password}
-                    onChange={(e) =>
-                      setCredentials({
-                        ...credentials,
-                        password: e.target.value,
-                      })
-                    }
-                  />
-                </div>
+              <TabsContent value={userType} className="mt-4">
+                <form
+                  onSubmit={handleLogin}
+                  method="post"
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="supplier-email">البريد الإلكتروني</Label>
+                    <Input
+                      id="supplier-email"
+                      type="email"
+                      placeholder="أدخل البريد الإلكتروني"
+                      value={credentials.email}
+                      onChange={(e) =>
+                        setCredentials({
+                          ...credentials,
+                          email: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supplier-password">كلمة المرور</Label>
+                    <Input
+                      id="supplier-password"
+                      type="password"
+                      placeholder="أدخل كلمة المرور"
+                      value={credentials.password}
+                      onChange={(e) =>
+                        setCredentials({
+                          ...credentials,
+                          password: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  {error && <CustomAlert message={error} variant="error" />}
+
+                  <Button
+                    className="w-full mt-6 focus-ring btn-primary"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <LogIn className="h-4 w-4 mr-2" />
+                    )}
+                    {loading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+                  </Button>
+                  <div className="text-center mt-4">
+                    <p className="text-sm text-gray-600">
+                      ليس لديك حساب؟{" "}
+                      <Link
+                        href="/signup"
+                        className="text-blue-600 hover:text-blue-700 font-medium"
+                      >
+                        إنشاء حساب جديد
+                      </Link>
+                    </p>
+                  </div>
+                </form>
               </TabsContent>
             </Tabs>
-
-            {error && <CustomAlert message={error} variant="error" />}
-
-            <Button
-              onClick={handleLogin}
-              className="w-full mt-6 focus-ring btn-primary"
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <LogIn className="h-4 w-4 mr-2" />
-              )}
-              {loading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
-            </Button>
-            <div className="text-center mt-4">
-              <p className="text-sm text-gray-600">
-                ليس لديك حساب؟{" "}
-                <Link
-                  href="/signup"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  إنشاء حساب جديد
-                </Link>
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
