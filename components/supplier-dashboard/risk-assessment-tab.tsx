@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,29 +11,19 @@ import {
 import { useContracts } from "@/hooks/use-contracts";
 import { useCreditInfo } from "@/hooks/use-credit-info";
 import { useUsers } from "@/hooks/use-users";
-import { getCreditRatingColor } from "@/lib/utils";
+import { getCreditRatingColor, translateRiskLevel } from "@/lib/utils";
 import { EyeOff, FileBarChart, Info } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import CustomAlert from "../shared/custom-alert";
 import EmptyState from "../shared/empty-state";
 import RiskIcon from "../shared/risk-icon";
 import SearchUsersInput from "../shared/search-users-input";
+import TableSkeleton from "../skeletons/table-skeleton";
 
 type Rating = Database["credit_info"]["credit_rating"];
 type Risk = Database["credit_info"]["risk_level"];
-type Contracts = Database["contract"][];
-export default function RiskAssessmentTab({
-  initialContracts,
-}: {
-  initialContracts: Contracts;
-}) {
-  const [filteredRetailers, setFilteredRetailers] = useState<
-    Database["user"][]
-  >([]);
 
-  const [selectedRetailer, setSelectedRetailer] = useState<
-    Database["user"] | null
-  >(null);
-
+export default function RiskAssessmentTab() {
   // Create the calculated state when the specified Retailer changes
   const [riskData, setRiskData] = useState<null | {
     creditRating: Rating;
@@ -43,16 +32,51 @@ export default function RiskAssessmentTab({
     activeContracts: number;
     totalCommitments: number;
   }>(null);
-  // Retailer credit info
-  const { creditInfo } = useCreditInfo(selectedRetailer?.id as string);
+  const { getUsersContractedWithCurrentUser, loading } = useUsers();
+  const { getCurrentUserContracts } = useContracts();
 
-  const { getUsersContractedWithCurrentUser } = useUsers();
-  const { getCurrentUserContracts } = useContracts(initialContracts);
+  const [selectedRetailer, setSelectedRetailer] = useState<
+    Database["user"] | null
+  >(null);
 
-  const { data: contracts } = getCurrentUserContracts();
+  const { data: contracts, error: contractsError } = getCurrentUserContracts();
+
+  const { data: retailers, error } = getUsersContractedWithCurrentUser(
+    contracts!
+  );
+  const { getCreditById } = useCreditInfo();
+
+  const creditInfo = getCreditById(selectedRetailer?.id || "");
+
+  useEffect(() => {
+    if (creditInfo) {
+      setRiskData({
+        creditRating: creditInfo.credit_rating!,
+        riskLevel: creditInfo.risk_level!,
+        totalContracts: creditInfo.total_contracts!,
+        activeContracts: creditInfo.active_contracts!,
+        totalCommitments: creditInfo.total_commitments!,
+      });
+    }
+  }, [creditInfo]);
+
+  if (loading) {
+    return <TableSkeleton />;
+  }
+
+  if (error || contractsError) {
+    return (
+      <CustomAlert
+        message={`حدث خطأ لم يتم تعريف المستخدم: ${
+          error?.message || contractsError?.message
+        }`}
+        variant="error"
+      />
+    );
+  }
 
   // Check the supplier's have contracts
-  if (!contracts) {
+  if (retailers.length < 1) {
     return (
       <EmptyState
         title="لا يوجد تجار بعد"
@@ -60,21 +84,6 @@ export default function RiskAssessmentTab({
         icon={EyeOff}
       />
     );
-  }
-  const retailers = getUsersContractedWithCurrentUser(contracts);
-
-  if (retailers) {
-    setFilteredRetailers(retailers);
-  }
-
-  if (creditInfo) {
-    setRiskData({
-      creditRating: creditInfo.credit_rating!,
-      riskLevel: creditInfo.risk_level!,
-      totalContracts: creditInfo.total_contracts!,
-      activeContracts: creditInfo.active_contracts!,
-      totalCommitments: creditInfo.total_commitments!,
-    });
   }
 
   return (
@@ -85,50 +94,10 @@ export default function RiskAssessmentTab({
           title="قائمة التجار"
           des="ابحث عن التاجر لعرض عقوده الحالية"
           userType="retailer"
-          users={filteredRetailers}
-          setUsers={setFilteredRetailers}
+          users={retailers}
+          getCreditById={getCreditById}
+          setSelectedRetailer={setSelectedRetailer}
         />
-        <div className="mt-4 space-y-2">
-          {filteredRetailers.map((retailer) => {
-            return (
-              <div
-                key={retailer.id}
-                className={`p-3 border rounded-lg cursor-pointer ${
-                  selectedRetailer?.id === retailer.id
-                    ? "border-primary bg-primary/5"
-                    : ""
-                }`}
-                onClick={() => setSelectedRetailer(retailer)}
-              >
-                <div className="flex justify-between">
-                  <div>
-                    <h3 className="font-medium text-sm">
-                      {retailer.full_name}
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      {creditInfo?.total_contracts ?? 0} عقود •{" "}
-                      {(creditInfo?.total_commitments ?? 0).toLocaleString()}{" "}
-                      ر.س
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <Badge
-                      className={getCreditRatingColor(
-                        creditInfo?.credit_rating ?? "C"
-                      )}
-                    >
-                      {creditInfo?.credit_rating ?? "C"}
-                    </Badge>
-                    <div className="flex items-center gap-1 text-xs">
-                      <RiskIcon risk={creditInfo?.risk_level} />
-                      {creditInfo?.risk_level ?? "متوسط"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
       {/* تفاصيل التقييم */}
@@ -136,24 +105,13 @@ export default function RiskAssessmentTab({
         {riskData && (
           <Card>
             <CardHeader>
-              <div className="flex justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileBarChart />
-                    {selectedRetailer?.full_name}
-                  </CardTitle>
-                  <CardDescription>
-                    بيانات التقييم الائتماني ومستوى المخاطر
-                  </CardDescription>
-                </div>
-                <Button
-                  onClick={() => {
-                    /* اتخاذ قرار */
-                  }}
-                >
-                  اتخاذ قرار
-                </Button>
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <FileBarChart />
+                {selectedRetailer?.full_name}
+              </CardTitle>
+              <CardDescription>
+                بيانات التقييم الائتماني ومستوى المخاطر
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -172,7 +130,9 @@ export default function RiskAssessmentTab({
                     </Badge>
                     <div className="flex items-center gap-1">
                       <RiskIcon risk={creditInfo?.risk_level} />
-                      <span className="text-sm">{riskData.riskLevel}</span>
+                      <span className="text-sm">
+                        {translateRiskLevel(riskData.riskLevel)}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>

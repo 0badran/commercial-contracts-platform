@@ -1,11 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -13,41 +20,46 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Edit, Eye, Plus, Search, TrendingUp } from "lucide-react"
-import { suppliers } from "@/data/suppliers"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Edit, Eye, Plus, Search, TrendingUp } from "lucide-react";
+import { suppliers } from "@/data/suppliers";
 
 export default function SuppliersTab() {
-  const [isAddingSupplier, setIsAddingSupplier] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [isAddingSupplier, setIsAddingSupplier] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [newSupplier, setNewSupplier] = useState({
     name: "",
     category: "",
     contactPerson: "",
     email: "",
     phone: "",
-  })
+  });
 
   const filteredSuppliers = suppliers.filter(
     (supplier) =>
       supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      supplier.category.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      supplier.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleAddSupplier = () => {
     // In real app, this would make an API call
-    console.log("Adding supplier:", newSupplier)
     setNewSupplier({
       name: "",
       category: "",
       contactPerson: "",
       email: "",
       phone: "",
-    })
-    setIsAddingSupplier(false)
-  }
+    });
+    setIsAddingSupplier(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -74,7 +86,9 @@ export default function SuppliersTab() {
                 <Input
                   id="supplier-name"
                   value={newSupplier.name}
-                  onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
+                  onChange={(e) =>
+                    setNewSupplier({ ...newSupplier, name: e.target.value })
+                  }
                   placeholder="أدخل اسم الشركة"
                 />
               </div>
@@ -82,14 +96,18 @@ export default function SuppliersTab() {
                 <Label htmlFor="category">التصنيف</Label>
                 <Select
                   value={newSupplier.category}
-                  onValueChange={(value) => setNewSupplier({ ...newSupplier, category: value })}
+                  onValueChange={(value) =>
+                    setNewSupplier({ ...newSupplier, category: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="اختر التصنيف" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="مواد غذائية">مواد غذائية</SelectItem>
-                    <SelectItem value="أجهزة كهربائية">أجهزة كهربائية</SelectItem>
+                    <SelectItem value="أجهزة كهربائية">
+                      أجهزة كهربائية
+                    </SelectItem>
                     <SelectItem value="ملابس">ملابس</SelectItem>
                     <SelectItem value="مواد بناء">مواد بناء</SelectItem>
                     <SelectItem value="أثاث">أثاث</SelectItem>
@@ -102,7 +120,12 @@ export default function SuppliersTab() {
                 <Input
                   id="contact-person"
                   value={newSupplier.contactPerson}
-                  onChange={(e) => setNewSupplier({ ...newSupplier, contactPerson: e.target.value })}
+                  onChange={(e) =>
+                    setNewSupplier({
+                      ...newSupplier,
+                      contactPerson: e.target.value,
+                    })
+                  }
                   placeholder="أدخل اسم الشخص المسؤول"
                 />
               </div>
@@ -112,7 +135,9 @@ export default function SuppliersTab() {
                   id="supplier-email"
                   type="email"
                   value={newSupplier.email}
-                  onChange={(e) => setNewSupplier({ ...newSupplier, email: e.target.value })}
+                  onChange={(e) =>
+                    setNewSupplier({ ...newSupplier, email: e.target.value })
+                  }
                   placeholder="example@company.com"
                 />
               </div>
@@ -121,13 +146,18 @@ export default function SuppliersTab() {
                 <Input
                   id="supplier-phone"
                   value={newSupplier.phone}
-                  onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
+                  onChange={(e) =>
+                    setNewSupplier({ ...newSupplier, phone: e.target.value })
+                  }
                   placeholder="05xxxxxxxx"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsAddingSupplier(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddingSupplier(false)}
+              >
                 إلغاء
               </Button>
               <Button onClick={handleAddSupplier}>إضافة المورد</Button>
@@ -193,5 +223,5 @@ export default function SuppliersTab() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

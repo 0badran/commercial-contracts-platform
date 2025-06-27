@@ -1,8 +1,8 @@
+import QueryProvider from "@/lib/query-provider";
 import type { Metadata } from "next";
 import { Noto_Sans_Arabic } from "next/font/google";
-import "./globals.css";
 import { Toaster } from "sonner";
-
+import "./globals.css";
 const noto_sans_arabic = Noto_Sans_Arabic({ subsets: ["arabic"] });
 
 export const metadata: Metadata = {
@@ -18,8 +18,10 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className={noto_sans_arabic.className}>
-        {children}
-        <Toaster />
+        <QueryProvider>
+          {children}
+          <Toaster />
+        </QueryProvider>
       </body>
     </html>
   );

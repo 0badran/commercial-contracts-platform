@@ -1,6 +1,14 @@
--- User Table
+
+-- ===================================================
+-- 📄 Schema: Credit System for Retailer Evaluation
+-- Includes: Tables, Indexes, Trigger Functions
+-- ===================================================
+
+-- ========================================
+-- 🔹 Table: users (retailers and suppliers)
+-- ========================================
 CREATE TABLE IF NOT EXISTS public.users (
-  id UUID REFERENCES auth.users ON DELETE CASCADE,
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
   user_type TEXT NOT NULL CHECK (user_type IN ('admin', 'retailer', 'supplier')),
@@ -11,30 +19,33 @@ CREATE TABLE IF NOT EXISTS public.users (
   phone2 TEXT,
   country TEXT NOT NULL,
   city TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  PRIMARY KEY (id)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
--- Contract Table
+-- ========================================
+-- 🔹 Table: contracts (supplier-retailer deals)
+-- ========================================
 CREATE TABLE IF NOT EXISTS public.contracts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   supplier_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   retailer_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   amount DECIMAL(15,2) NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'completed', 'cancelled', 'rejected')),
-  start_date DATE,
-  end_date DATE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'completed', 'overdue', 'rejected')),
   due_date DATE,
   paid_date DATE,
-	payment_terms TEXT NOT NULL,
+	start_dare date,
+	end_date date,
+	payment_terms INTEGER NOT NULL CHECK (payment_terms IN (15, 30, 45, 60)),
   description TEXT,
   number_of_payments INTEGER NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
--- Payment Schedule Table
+-- ========================================
+-- 🔹 Table: payments (scheduled payments)
+-- ========================================
 CREATE TABLE IF NOT EXISTS public.payments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   contract_id UUID NOT NULL REFERENCES public.contracts(id) ON DELETE CASCADE,
@@ -42,18 +53,20 @@ CREATE TABLE IF NOT EXISTS public.payments (
   amount_paid DECIMAL(15,2) DEFAULT 0 NOT NULL,
   due_date DATE NOT NULL,
   paid_date DATE,
-  status TEXT NOT NULL CHECK (status IN ('due', 'paid', 'overdue', 'partial')),
-  payment_method TEXT,
+  status TEXT NOT NULL CHECK (status IN ('due', 'paid', 'overdue')),
+  payment_verification TEXT DEFAULT 'pending' CHECK (payment_verification IN ('pending', 'verified', 'rejected')),
+  payment_method TEXT NOT NULL,
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-
--- Credit Scorecard Table
+-- ========================================
+-- 🔹 Table: credit_info (retailer credit summary)
+-- ========================================
 CREATE TABLE IF NOT EXISTS public.credit_info (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  retailer_id UUID UNIQUE NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   total_contracts INTEGER DEFAULT 0,
   active_contracts INTEGER DEFAULT 0,
   total_commitments DECIMAL(15,2) DEFAULT 0,
@@ -70,17 +83,9 @@ CREATE TABLE IF NOT EXISTS public.credit_info (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
-CREATE INDEX IF NOT EXISTS idx_users_type ON public.users(user_type);
-CREATE INDEX IF NOT EXISTS idx_contracts_retailer ON public.contracts(retailer_id);
-CREATE INDEX IF NOT EXISTS idx_contracts_supplier ON public.contracts(supplier_id);
-CREATE INDEX IF NOT EXISTS idx_contracts_status ON public.contracts(status);
-CREATE INDEX IF NOT EXISTS idx_payments_contract ON public.payments(contract_id);
-CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);
-CREATE INDEX IF NOT EXISTS idx_credit_ratings_user ON public.credit_ratings(user_id);
-
--- Trigger Function to update updated_at
+-- ========================================
+-- 🔹 Trigger function: auto update `updated_at`
+-- ========================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -89,7 +94,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Add Triggers
+-- 🔹 Triggers to auto update timestamps
 CREATE TRIGGER update_users_updated_at
 BEFORE UPDATE ON public.users
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -102,6 +107,16 @@ CREATE TRIGGER update_payments_updated_at
 BEFORE UPDATE ON public.payments
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_credit_ratings_updated_at
-BEFORE UPDATE ON public.credit_ratings
+CREATE TRIGGER update_credit_info_updated_at
+BEFORE UPDATE ON public.credit_info
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 🔹 Recommended Indexes
+CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
+CREATE INDEX IF NOT EXISTS idx_users_type ON public.users(user_type);
+CREATE INDEX IF NOT EXISTS idx_contracts_retailer ON public.contracts(retailer_id);
+CREATE INDEX IF NOT EXISTS idx_contracts_supplier ON public.contracts(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_contracts_status ON public.contracts(status);
+CREATE INDEX IF NOT EXISTS idx_payments_contract ON public.payments(contract_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);
+CREATE INDEX IF NOT EXISTS idx_credit_info_user ON public.credit_info(retailer_id);

@@ -1,14 +1,17 @@
 import CustomAlert from "@/components/shared/custom-alert";
 import SignoutButton from "@/components/shared/signout-button";
-import ContractTabSkelton from "@/components/skelton/contract-tab-skelton";
+import TableSkeleton from "@/components/skeletons/table-skeleton";
 import CreditInfoTab from "@/components/supplier-dashboard/credit-info-tab";
+import PaymentsVerificationTab from "@/components/supplier-dashboard/payments-verification-tab";
 import PendingContractsTab from "@/components/supplier-dashboard/pending-contracts-tab";
-import RetailersContractsTab from "@/components/supplier-dashboard/retailers-contracts-tab";
+import ContractsTab from "@/components/supplier-dashboard/supplier-contracts-tab";
 import RiskAssessmentTab from "@/components/supplier-dashboard/risk-assessment-tab";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import getContracts from "@/services/get-contracts";
 import getUser from "@/services/get-user";
+import { AlertCircle } from "lucide-react";
+
 import {
   Building2,
   Clock,
@@ -21,7 +24,7 @@ import { Suspense } from "react";
 
 export default async function SupplierDashboard() {
   const { user, error: userError } = await getUser();
-  const { data: contracts, error: contractError } = await getContracts();
+  const { contracts, error: contractError } = await getContracts();
   if (userError) {
     redirect("/", RedirectType.replace);
   }
@@ -91,29 +94,32 @@ export default async function SupplierDashboard() {
               <CreditCard className="h-4 w-4" />
               المعلومات الائتمانية
             </TabsTrigger>
+
+            <TabsTrigger value="payments" className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              مراجعة الدفعات
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="retailers">
-            <Suspense fallback={<ContractTabSkelton />}>
-              <RetailersContractsTab />
-            </Suspense>
+            <ContractsTab />
           </TabsContent>
 
           <TabsContent value="pending">
-            <Suspense fallback={<ContractTabSkelton />}>
-              <PendingContractsTab pendingContracts={pendingContracts} />
-            </Suspense>
+            <PendingContractsTab />
           </TabsContent>
 
           <TabsContent value="risk">
-            <Suspense fallback={<ContractTabSkelton />}>
-              <RiskAssessmentTab initialContracts={contracts} />
-            </Suspense>
+            <RiskAssessmentTab />
           </TabsContent>
 
           <TabsContent value="credit">
-            <Suspense fallback={<ContractTabSkelton />}>
-              <CreditInfoTab initialContracts={contracts} />
+            <CreditInfoTab />
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <Suspense fallback={<TableSkeleton />}>
+              <PaymentsVerificationTab />
             </Suspense>
           </TabsContent>
         </Tabs>

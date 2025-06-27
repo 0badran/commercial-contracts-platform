@@ -16,40 +16,49 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CheckCircle, CreditCard, EyeOff, Search, XCircle } from "lucide-react";
+import { CheckCircle, CreditCard, EyeOff, XCircle } from "lucide-react";
 import { useState } from "react";
 
 import { useContracts } from "@/hooks/use-contracts";
 import { useCreditInfo } from "@/hooks/use-credit-info";
 import { useUsers } from "@/hooks/use-users";
-import { getCreditRatingColor } from "@/lib/utils";
+import { getCreditRatingColor, translateRiskLevel } from "@/lib/utils";
+import CustomAlert from "../shared/custom-alert";
 import EmptyState from "../shared/empty-state";
 import RiskIcon from "../shared/risk-icon";
 import SearchUsersInput from "../shared/search-users-input";
-type Contracts = Database["contract"][];
+import TableSkeleton from "../skeletons/table-skeleton";
 
-export default function CreditInfoTab({
-  initialContracts,
-}: {
-  initialContracts: Contracts;
-}) {
-  const [filteredRetailers, setFilteredRetailers] = useState<
-    Database["user"][]
-  >([]);
-
+export default function CreditInfoTab() {
+  const { getUsersContractedWithCurrentUser, loading } = useUsers();
+  const { getCurrentUserContracts } = useContracts();
   const [selectedRetailer, setSelectedRetailer] = useState<
     Database["user"] | null
   >(null);
-  // Retailer credit info
-  const { creditInfo } = useCreditInfo(selectedRetailer?.id as string);
 
-  const { getUsersContractedWithCurrentUser } = useUsers();
-  const { getCurrentUserContracts } = useContracts(initialContracts);
+  const { data: contracts, error: contractsError } = getCurrentUserContracts();
+  const { data: retailers, error } = getUsersContractedWithCurrentUser(
+    contracts!
+  );
 
-  const { data: contracts } = getCurrentUserContracts();
+  const { getCreditById } = useCreditInfo();
+  const creditInfo = getCreditById(selectedRetailer?.id || "");
 
+  if (loading) {
+    return <TableSkeleton />;
+  }
+  if (error || contractsError) {
+    return (
+      <CustomAlert
+        message={`حدث خطأ لم يتم تعريف المستخدم: ${
+          error?.message || contractsError?.message
+        }`}
+        variant="error"
+      />
+    );
+  }
   // Check the supplier's have contracts
-  if (!contracts) {
+  if (retailers?.length < 1) {
     return (
       <EmptyState
         title="لا يوجد تجار بعد"
@@ -58,67 +67,18 @@ export default function CreditInfoTab({
       />
     );
   }
-  const retailers = getUsersContractedWithCurrentUser(contracts);
-
-  if (retailers) {
-    setFilteredRetailers(retailers);
-  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-1">
         <SearchUsersInput
-          title="اختر تاجراً لعرض معلوماته الائتمانية"
-          des="اختر تاجراً من القائمة لعرض تقريره الائتماني الشامل"
+          title="قائمة التجار"
+          des="ابحث عن التاجر لعرض عقوده الحالية"
           userType="retailer"
-          users={filteredRetailers}
-          setUsers={setFilteredRetailers}
+          users={retailers}
+          getCreditById={getCreditById}
+          setSelectedRetailer={setSelectedRetailer}
         />
-
-        <div className="space-y-2">
-          {filteredRetailers.map((retailer) => (
-            <div
-              key={retailer.id}
-              className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
-                selectedRetailer?.id === retailer.id
-                  ? "border-primary bg-primary/5 shadow-xs"
-                  : "border-border hover:border-border/80 hover:bg-accent/50"
-              }`}
-              onClick={() => setSelectedRetailer(retailer)}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium text-sm">{retailer.full_name}</h3>
-                  <p className="text-xs text-gray-600 mt-1">
-                    عقود {creditInfo?.total_contracts} •{" "}
-                    {creditInfo?.paid_amount!.toLocaleString()} ر.س
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    رقم السجل: CR-{retailer.commercial_identity_number}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <Badge
-                    className={getCreditRatingColor(creditInfo?.credit_rating)}
-                  >
-                    {creditInfo?.credit_rating}
-                  </Badge>
-                  <div className="flex items-center gap-1">
-                    <RiskIcon risk={creditInfo?.risk_level} />
-                    <span className="text-xs">{creditInfo?.risk_level}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {filteredRetailers.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>لم يتم العثور على نتائج</p>
-            </div>
-          )}
-        </div>
       </div>
 
       <div className="lg:col-span-2">
@@ -148,7 +108,7 @@ export default function CreditInfoTab({
                     <div className="flex justify-center items-center gap-1">
                       <RiskIcon risk={creditInfo.risk_level} />
                       <span className="text-xs font-medium">
-                        {creditInfo.risk_level}
+                        {translateRiskLevel(creditInfo.risk_level)}
                       </span>
                     </div>
                   </div>

@@ -1,0 +1,123 @@
+// Start Make a Decision
+const handleOpenDecisionDialog = (retailerId: string, retailerName: string) => {
+  setDecisionData({
+    retailerId,
+    retailerName,
+    decision: "approve",
+    notes: "",
+    facilityAmount: "",
+  });
+  setIsDecisionDialogOpen(true);
+};
+
+const handleSubmitDecision = () => {
+  console.log("Decision submitted:", decisionData);
+  setIsDecisionDialogOpen(false);
+  alert(
+    `تم حفظ القرار بنجاح: ${
+      decisionData.decision === "approve"
+        ? "منح تسهيلات"
+        : decisionData.decision === "reject"
+        ? "رفض"
+        : "طلب بيانات إضافية"
+    }`
+  );
+};
+
+<Button
+  onClick={() =>
+    handleOpenDecisionDialog(
+      selectedRetailer.id as string,
+      selectedRetailer.full_name
+    )
+  }
+  className="flex items-center gap-1"
+>
+  <FileBarChart className="h-4 w-4" />
+  اتخاذ قرار
+</Button>;
+
+{
+  /* Dialog */
+}
+<Dialog open={isDecisionDialogOpen} onOpenChange={setIsDecisionDialogOpen}>
+  <DialogContent className="sm:max-w-[500px]">
+    <DialogHeader>
+      <DialogTitle>اتخاذ قرار بشأن التاجر</DialogTitle>
+      <DialogDescription>
+        {decisionData.retailerName} - اتخذ قراراً بشأن منح التسهيلات أو طلب
+        بيانات إضافية
+      </DialogDescription>
+    </DialogHeader>
+
+    <div className="grid gap-4 py-4">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <CreditCard className="h-4 w-4 text-blue-600" />
+          <span>القرار</span>
+        </div>
+        <Select
+          value={decisionData.decision}
+          onValueChange={(value) =>
+            setDecisionData({
+              ...decisionData,
+              decision: value as "approve" | "reject" | "moreInfo",
+            })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="اختر القرار" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="approve">منح تسهيلات</SelectItem>
+            <SelectItem value="reject">رفض</SelectItem>
+            <SelectItem value="moreInfo">طلب بيانات إضافية</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {decisionData.decision === "approve" && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-blue-600" />
+            <span>قيمة التسهيلات (ر.س)</span>
+          </div>
+          <Input
+            type="number"
+            placeholder="أدخل قيمة التسهيلات"
+            value={decisionData.facilityAmount}
+            onChange={(e) =>
+              setDecisionData({
+                ...decisionData,
+                facilityAmount: e.target.value,
+              })
+            }
+          />
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <CreditCard className="h-4 w-4 text-blue-600" />
+          <span>ملاحظات</span>
+        </div>
+        <Textarea
+          placeholder="أدخل ملاحظات إضافية حول القرار"
+          value={decisionData.notes}
+          onChange={(e) =>
+            setDecisionData({ ...decisionData, notes: e.target.value })
+          }
+        />
+      </div>
+    </div>
+
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setIsDecisionDialogOpen(false)}>
+        إلغاء
+      </Button>
+      <Button onClick={handleSubmitDecision}>حفظ القرار</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>;
+
+// End Make a Decision

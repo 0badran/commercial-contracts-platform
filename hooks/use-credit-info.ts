@@ -1,49 +1,39 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 type CreditInfo = Database["credit_info"];
 
-export function useCreditInfo(retailerId: string | null) {
+export function useCreditInfo() {
   const supabase = createClient();
-  const [creditInfo, setCreditInfo] = useState<CreditInfo | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<Error | null>(null);
+  const {
+    data,
+    error,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: ["credit_info"],
+    queryFn: async () =>
+      supabase
+        .from("credit_info")
+        .select("*")
+        .order("created_at", { ascending: false }),
+  });
 
-  const fetchCreditInfo = useCallback(async () => {
-    if (!retailerId) {
-      return setError(new Error("Retailer id is missing"));
+  const creditInfo: CreditInfo[] = data?.data || [];
+
+  const getCreditById = (id: string) => {
+    if (!creditInfo) {
+      return null;
     }
-    setLoading(true);
-    setError(null);
-
-    const { data, error: sbError } = await supabase
-      .from("credit_info")
-      .select("*")
-      .eq("user_id", retailerId)
-      .single();
-
-    setLoading(false);
-
-    if (sbError) {
-      setError(sbError);
-      setCreditInfo(null);
-      return { data: null, error: sbError };
-    }
-
-    setCreditInfo(data || null);
-    return { data: data || null, error: null };
-  }, [retailerId, supabase]);
-
-  useEffect(() => {
-    fetchCreditInfo();
-  }, [fetchCreditInfo]);
-
+    return creditInfo.find((credit) => credit.retailer_id === id) || null;
+  };
   return {
     creditInfo,
     loading,
     error,
-    refetch: fetchCreditInfo,
+    refetch,
+    getCreditById,
   };
 }

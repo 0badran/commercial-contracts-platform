@@ -1,8 +1,7 @@
 import StatsCards from "@/components/retailer-dashboard/stats-cards";
 import TabsContainer from "@/components/retailer-dashboard/tabs-container";
 import SignoutButton from "@/components/shared/signout-button";
-import StatsCardSkelton from "@/components/skelton/stats-card-skelton";
-import { createClient } from "@/lib/supabase/server";
+import StatsCardSkelton from "@/components/skeletons/stats-card-skelton";
 import getUser from "@/services/get-user";
 import { Store } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -13,13 +12,6 @@ export default async function RetailerDashboard() {
   if (error) {
     redirect("/");
   }
-
-  const supabase = await createClient();
-  const contractsPromise = supabase
-    .from("contracts")
-    .select("*")
-    .eq("retailer_id", user?.id)
-    .order("created_at", { ascending: false }) as any;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,11 +37,13 @@ export default async function RetailerDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Statistics Cards */}
         <Suspense fallback={<StatsCardSkelton />}>
-          <StatsCards contractPromise={contractsPromise} user={user} />
+          <StatsCards user={user} />
         </Suspense>
 
         {/* Main Content */}
-        <TabsContainer user={user} />
+        <Suspense fallback={<StatsCardSkelton />}>
+          <TabsContainer />
+        </Suspense>
       </main>
     </div>
   );

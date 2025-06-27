@@ -1,41 +1,68 @@
-"use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { createClient } from "../lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 type Payment = Database["payment"];
 
-export function usePayments(props?: { contractId?: string; userId?: string }) {
-  const { contractId, userId } = props || {};
+export function usePayments({
+  contractId,
+  retailerId,
+  supplierId,
+}: {
+  contractId?: string;
+  retailerId?: string;
+  supplierId?: string;
+}) {
   const supabase = createClient();
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["payments", contractId, retailerId, supplierId],
+    queryFn: async () => {
+      if (contractId) {
+        return supabase
+          .from("payments")
+          .select("*")
+          .eq("contract_id", contractId)
+          .order("created_at", { ascending: true });
+      }
 
-  const fetchPayments = useCallback(async () => {
-    let query = supabase.from("payments").select("*");
+      if (retailerId) {
+        return supabase
+          .from("payments")
+          .select(
+            `
+						*,
+						contract:contracts!inner(retailer_id)
+					`
+          )
+          .eq("contract.retailer_id", retailerId)
+          .order("created_at", { ascending: true });
+      }
 
-    if (contractId) {
-      query = query.eq("contract_id", contractId);
-    }
+      if (supplierId) {
+        return supabase
+          .from("payments")
+          .select(
+            `
+				*,
+				contract:contracts!inner(supplier_id)
+			`
+          )
+          .eq("contract.supplier_id", supplierId)
+          .order("created_at", { ascending: true });
+      }
 
-    if (userId) {
-      query = query.eq("user_id", userId);
-    }
+      return supabase
+        .from("payments")
+        .select("*")
+        .order("created_at", { ascending: true });
+    },
+  });
 
-    setLoading(true);
-    const { data, error } = await query.order("due_date", {
-      ascending: true,
-    });
-    setLoading(false);
-
-    setPayments(data || []);
-    setError(error ? error.message : null);
-  }, [contractId, supabase, userId]);
-
-  useEffect(() => {
-    fetchPayments();
-  }, [fetchPayments]);
+  const payments: Database["payment"][] = data?.data || [];
 
   const createPayment = async (payment: Payment) => {
     const { data, error } = await supabase
@@ -44,14 +71,13 @@ export function usePayments(props?: { contractId?: string; userId?: string }) {
       .select()
       .single<Payment>();
 
-    if (error) {
-      return setError(error.message);
-    }
-    setPayments((prev) => [...prev, data]);
-    return data;
+    return { data, error };
   };
 
-  const updatePayment = async (id: string, updates: Payment) => {
+  const updatePayment = async (
+    id: string,
+    updates: Partial<Omit<Payment, "id" | "created_at" | "updated_at">>
+  ) => {
     const { data, error } = await supabase
       .from("payments")
       .update(updates)
@@ -59,23 +85,31 @@ export function usePayments(props?: { contractId?: string; userId?: string }) {
       .select()
       .single<Payment>();
 
-    if (error) {
-      setError(error.message);
-      return;
-    }
+    return { data, error };
+  };
 
-    setPayments((prev) =>
-      prev.map((payment) => (payment.id === id ? data : payment))
-    );
-    return data;
+  const deletePayment = async (id: string) => {
+    const { data, error } = await supabase
+      .from("payments")
+      .delete()
+      .eq("id", id)
+      .single<Payment>();
+
+    return { error, data };
+  };
+
+  const getPaymentById = (id: string) => {
+    return payments.find((p) => p.id === id) || null;
   };
 
   return {
     payments,
     loading,
     error,
+    refetch,
     createPayment,
     updatePayment,
-    refetch: fetchPayments,
+    deletePayment,
+    getPaymentById,
   };
 }

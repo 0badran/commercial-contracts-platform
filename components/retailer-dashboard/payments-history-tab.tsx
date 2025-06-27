@@ -26,6 +26,11 @@ import {
   Clock,
   XCircle,
 } from "lucide-react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { useRef, useState } from "react";
+import { isUUID } from "@/lib/utils";
+import EmptyState from "../shared/empty-state";
 
 const getPaymentStatusBadge = (status: string) => {
   switch (status) {
@@ -62,16 +67,44 @@ const getPaymentStatusBadge = (status: string) => {
   }
 };
 
-export default function PaymentsTab() {
-  const { contracts } = useContracts();
-  const { payments } = usePayments();
-  const { getUsersByType } = useUsers();
-
-  function findUserById(id: string) {
-    const users = getUsersByType("supplier");
-    return users.find((item) => id == item.id);
+const getVerificationBadge = (status: string) => {
+  switch (status) {
+    case "verified":
+      return <Badge className="bg-green-100 text-green-800">تم التحقق</Badge>;
+    case "pending":
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800">قيد المراجعة</Badge>
+      );
+    case "rejected":
+      return <Badge className="bg-red-100 text-red-800">مرفوض</Badge>;
+    default:
+      return <Badge variant="secondary">{status}</Badge>;
   }
-  // Calculate upcoming payments (due within the next 7 days)
+};
+
+export default function PaymentsHistoryTab() {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [contractId, setContractId] = useState<string>("");
+  const [error, setError] = useState("");
+  const { contracts, getContractById } = useContracts();
+  const { getUserById, currentUser } = useUsers();
+
+  const { payments } = usePayments(
+    contractId
+      ? { contractId }
+      : {
+          retailerId: currentUser?.id,
+        }
+  );
+
+  if (payments.length === 0) {
+    return (
+      <EmptyState
+        title="لا يوجد مدفوعات بعد"
+        description="لم يتم عمل اية معامله"
+      />
+    );
+  }
   const upcomingPayments = payments.filter((p) => {
     const dueDate = new Date(p.due_date);
     const today = new Date();
@@ -79,11 +112,14 @@ export default function PaymentsTab() {
     return p.status === "paid" && dueDate >= today && dueDate <= nextWeek;
   });
 
-  // Calculate overdue payments
   const overduePayments = payments.filter((p) => {
     const dueDate = new Date(p.due_date);
     const today = new Date();
-    return p.status === "due" && dueDate < today;
+    return (
+      p.status === "due" &&
+      p.payment_verification === "verified" &&
+      dueDate < today
+    );
   });
 
   return (
@@ -110,13 +146,13 @@ export default function PaymentsTab() {
                   >
                     <span className="text-sm">
                       {
-                        findUserById(contract?.supplier_id as string)
+                        getUserById(contract?.supplier_id as string)
                           ?.commercial_name
                       }
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
-                        {payment.amount.toLocaleString()} ر.س
+                        {payment.amount_paid?.toLocaleString()} ر.س
                       </span>
                       <span className="text-xs text-gray-600">
                         {payment.due_date}
@@ -152,13 +188,13 @@ export default function PaymentsTab() {
                   >
                     <span className="text-sm">
                       {
-                        findUserById(contract?.supplier_id as string)
+                        getUserById(contract?.supplier_id as string)
                           ?.commercial_name
                       }
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
-                        {payment.amount.toLocaleString()} ر.س
+                        {payment.amount_due?.toLocaleString()} ر.س
                       </span>
                       <span className="text-xs text-red-600">
                         متأخر منذ {payment.due_date}
@@ -174,9 +210,34 @@ export default function PaymentsTab() {
 
       {/* Payment History */}
       <Card className="bg-card/50 backdrop-blur-xs border-border/50 shadow-lg">
-        <CardHeader>
-          <CardTitle>سجل السداد</CardTitle>
-          <CardDescription>جميع المدفوعات والدفعات المستحقة</CardDescription>
+        <CardHeader className="justify-between md:flex-row">
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                const contractId = inputRef.current?.value;
+                if (!isUUID(contractId!)) {
+                  setTimeout(() => setError(""), 5000);
+                  return setError("معرف عقد غير صحيح");
+                }
+                setContractId(contractId!);
+              }}
+            >
+              عرض سجل السداد
+            </Button>
+            <div>
+              <Input type="text" placeholder="ادخل معرف العقد" ref={inputRef} />
+              <p className="text-red-500 text-xs">{error}</p>
+            </div>
+          </div>
+          <div className="">
+            <CardTitle>سجل السداد</CardTitle>
+            <CardDescription>{`جميع المدفوعات والدفعات المستحقة`}</CardDescription>
+            {contractId && (
+              <Button variant={"ghost"} onClick={() => setContractId("")}>
+                إلغاء
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -189,33 +250,34 @@ export default function PaymentsTab() {
                 <TableHead>تاريخ الدفع</TableHead>
                 <TableHead>طريقة الدفع</TableHead>
                 <TableHead>الحالة</TableHead>
+                <TableHead>التحقق من الدفع</TableHead>
                 <TableHead>ملاحظات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {payments.map((payment) => {
-                const contract = contracts.find(
-                  (c) => c.id === payment.contract_id
-                );
+                const contract = getContractById(payment.contract_id);
                 return (
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">
-                      {
-                        findUserById(contract?.supplier_id as string)
-                          ?.commercial_name
-                      }
+                      {getUserById(contract!.supplier_id)?.full_name}
                     </TableCell>
-                    <TableCell>{payment.amount.toLocaleString()} ر.س</TableCell>
                     <TableCell>
-                      {payment.paid_amount
-                        ? `${payment.paid_amount.toLocaleString()} ر.س`
+                      {payment.amount_due.toLocaleString()} ر.س
+                    </TableCell>
+                    <TableCell>
+                      {payment.amount_paid
+                        ? `${payment.amount_paid.toLocaleString()} ر.س`
                         : "-"}
                     </TableCell>
                     <TableCell>{payment.due_date}</TableCell>
-                    <TableCell>{payment.due_date || "-"}</TableCell>
+                    <TableCell>{payment.paid_date || "-"}</TableCell>
                     <TableCell>{payment.payment_method || "-"}</TableCell>
                     <TableCell>
                       {getPaymentStatusBadge(payment.status || "-")}
+                    </TableCell>
+                    <TableCell>
+                      {getVerificationBadge(payment.payment_verification!)}
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
                       {payment.notes || "-"}

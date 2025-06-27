@@ -1,4 +1,4 @@
-const paths = {
+const PATHS = {
   dashboards: {
     supplier: "/dashboards/supplier-dashboard",
     retailer: "/dashboards/retailer-dashboard",
@@ -12,4 +12,9 @@ const paths = {
   },
 };
 
-export default paths;
+const ERROR_TYPES = {
+  USER_MISSING: "USER_MISSING",
+  CONTRACTS_FETCH_ERROR: "CONTRACTS_FETCH_ERROR",
+};
+
+export { PATHS, ERROR_TYPES };
