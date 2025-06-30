@@ -233,14 +233,23 @@ export default function PaymentsHistoryTab() {
             <CardTitle>سجل السداد</CardTitle>
             <CardDescription>{`جميع المدفوعات والدفعات المستحقة`}</CardDescription>
             {contractId && (
-              <Button variant={"ghost"} onClick={() => setContractId("")}>
+              <Button
+                className="mr-auto block mt-2"
+                variant={"outline"}
+                onClick={() => {
+                  setContractId("");
+                  if (inputRef.current) {
+                    inputRef.current.value = "";
+                  }
+                }}
+              >
                 إلغاء
               </Button>
             )}
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
+          <Table className="max-h-100 overflow-y-auto">
             <TableHeader>
               <TableRow>
                 <TableHead>المورد</TableHead>

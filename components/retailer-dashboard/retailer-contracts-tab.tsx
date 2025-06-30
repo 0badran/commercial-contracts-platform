@@ -16,30 +16,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useContracts } from "@/hooks/use-contracts";
-import CustomAlert from "../shared/custom-alert";
-import StatusBadge from "../shared/status-badge";
-import ContractTabSkelton from "../skeletons/contract-tab-skelton";
-import CreateContractDialog from "./create-contract-dialog";
-import MakePaymentDialog from "./make-payment-dialog";
-import { useState } from "react";
-import { usePayments } from "@/hooks/use-payments";
-import EditContractDialog from "./edit-contract-dialog";
-import { Button } from "../ui/button";
 import { useUsers } from "@/hooks/use-users";
 import { crazyToast, emptyCell } from "@/lib/utils";
 import { Copy } from "lucide-react";
+import CustomAlert from "../shared/custom-alert";
 import EmptyState from "../shared/empty-state";
+import StatusBadge from "../shared/status-badge";
+import ContractTabSkelton from "../skeletons/contract-tab-skelton";
+import { Button } from "../ui/button";
+import CreateContractDialog from "./create-contract-dialog";
+import EditContractDialog from "./edit-contract-dialog";
+import MakePaymentDialog from "./make-payment-dialog";
+import { usePayments } from "@/hooks/use-payments";
 
 export default function ContractsTab() {
-  const [contract, setContract] = useState<Database["contract"] | null>(null);
-  const { createPayment, payments } = usePayments({ contractId: contract?.id });
   const { getUserById, loading, error: userError } = useUsers();
+  const { createPayment, payments } = usePayments({});
+
   const {
     createContract,
     loading: contractsLoading,
     error: contractsError,
     updateContract,
     deleteContract,
+    refetch,
     contracts,
   } = useContracts();
 
@@ -51,7 +51,10 @@ export default function ContractsTab() {
             <CardTitle>عقودي التجارية</CardTitle>
             <CardDescription>جميع العقود المسجلة في النظام</CardDescription>
           </div>
-          <CreateContractDialog createContract={createContract} />
+          <CreateContractDialog
+            refetch={refetch}
+            createContract={createContract}
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -87,7 +90,7 @@ export default function ContractsTab() {
                   <TableHead>تاريخ نهاية العقد</TableHead>
                   <TableHead>تاريخ الدفعه القادمة</TableHead>
                   <TableHead>الحالة</TableHead>
-                  <TableHead>أجراء</TableHead>
+                  <TableHead>الاجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -117,7 +120,7 @@ export default function ContractsTab() {
                     <TableCell>
                       <StatusBadge status={contract.status!} />
                     </TableCell>
-                    <TableCell className="flex justify-center gap-2">
+                    <TableCell className="flex items-center gap-2">
                       {(() => {
                         switch (contract.status) {
                           case "pending":
@@ -142,9 +145,9 @@ export default function ContractsTab() {
                             return (
                               <MakePaymentDialog
                                 createPayment={createPayment}
-                                setContract={setContract}
                                 contract={contract}
                                 payments={payments}
+                                updateContract={updateContract}
                               />
                             );
                           default:

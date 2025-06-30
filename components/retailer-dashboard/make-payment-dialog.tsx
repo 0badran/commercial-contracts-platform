@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -18,76 +17,81 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { crazyToast } from "@/lib/utils";
+import { PostgrestError } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useState } from "react";
+
+type Payment = Database["payment"];
+type Contract = Database["contract"];
 interface MakePaymentButtonProps {
-  contract: Database["contract"];
-  setContract?: (contract: Database["contract"]) => void;
-  payments: Database["payment"][];
-  createPayment: (payment: Database["payment"]) => Promise<any>;
+  contract: Contract;
+  payments: Payment[];
+  createPayment: (
+    payment: Payment
+  ) => Promise<{ data: Payment | null; error: PostgrestError | null }>;
+  updateContract: (
+    id: string,
+    contract: Contract
+  ) => Promise<{ data: Contract | null; error: PostgrestError | null }>;
 }
 export default function MakePaymentDialog({
   contract,
-  payments,
-  setContract,
   createPayment,
+  payments,
 }: MakePaymentButtonProps) {
-  const [form, setForm] = useState({
+  const initialValues = {
     amountType: "installment",
     customAmount: "",
     method: "cash",
     notes: "",
-  });
-
-  const totalDue = contract.amount;
-  const paidSoFar = payments.reduce((sum, p) => sum + p.amount_paid!, 0);
-  const remainingAmount = totalDue - paidSoFar;
-  const installmentAmount = totalDue / contract.number_of_payments;
-  const remainingInstallments = Math.ceil(remainingAmount / installmentAmount);
+  };
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState(initialValues);
+  const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const totalAmount = contract.amount;
+  const amountDue = totalAmount / contract.number_of_payments;
+  const remainingPayments =
+    contract.number_of_payments -
+    payments.filter(
+      (p) =>
+        p.contract_id === contract.id && p.payment_verification === "verified"
+    ).length;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    setContract?.(contract);
     e.preventDefault();
-
-    const amount_paid =
-      form.amountType === "installment"
-        ? installmentAmount
-        : Number(form.customAmount);
-
-    if (amount_paid > remainingAmount) {
-      crazyToast("المبلغ المدفوع أكبر من المتبقي في العقد", "error");
-      return;
+    if (remainingPayments < 1) {
+      return crazyToast(
+        "تم دفع المبلغ لا يوجد مستحقات في انتظار التاكيد",
+        "error"
+      );
     }
-
-    const due_date = new Date();
-    const paid_date = new Date();
-
-    await createPayment({
+    setLoading(true);
+    const { error } = await createPayment({
       contract_id: contract.id!,
-      amount_due: installmentAmount,
-      amount_paid,
-      due_date: format(due_date, "yyyy-MM-dd"),
-      paid_date: format(paid_date, "yyyy-MM-dd"),
-      status:
-        amount_paid === installmentAmount
-          ? "paid"
-          : amount_paid > 0
-          ? "partial"
-          : "due",
+      amount_due: amountDue,
+      amount_paid: amountDue,
+      due_date: contract.due_date!,
+      paid_date: format(new Date(), "yyyy-MM-dd"),
+      status: "due",
       payment_method: form.method,
+      payment_verification: "pending",
       notes: form.notes,
     });
-
-    setForm({
-      amountType: "installment",
-      customAmount: "",
-      method: "cash",
-      notes: "",
-    });
+    setLoading(false);
+    if (error) {
+      return crazyToast("حدث خطا أثناء تاكيد الدفع", "error");
+    }
+    setTimeout(() => setOpen(false), 1000);
+    crazyToast("تم طلب تاكيد الدفع", "success");
+    setForm(initialValues);
+    queryClient.invalidateQueries({ queryKey: ["contracts"] });
+    queryClient.invalidateQueries({ queryKey: ["payments"] });
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm">سداد دفعة</Button>
       </DialogTrigger>
@@ -107,7 +111,6 @@ export default function MakePaymentDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="installment">تسديد دفعة</SelectItem>
-                <SelectItem value="custom">مبلغ آخر</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -115,27 +118,11 @@ export default function MakePaymentDialog({
           {form.amountType === "installment" && (
             <div className="text-sm text-gray-600">
               <p>
-                عدد الدفعات المتبقية: <strong>{remainingInstallments}</strong>
+                عدد الدفعات المتبقية: <strong>{remainingPayments}</strong>
               </p>
               <p>
                 قيمة الدفعة الحالية:{" "}
-                <strong>{installmentAmount.toLocaleString()} ر.س</strong>
-              </p>
-            </div>
-          )}
-
-          {form.amountType === "custom" && (
-            <div>
-              <label className="text-sm font-medium">المبلغ</label>
-              <Input
-                type="number"
-                value={form.customAmount}
-                onChange={(e) =>
-                  setForm({ ...form, customAmount: e.target.value })
-                }
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                المبلغ المتبقي: {remainingAmount.toLocaleString()} ر.س
+                <strong>{amountDue.toLocaleString()} ر.س</strong>
               </p>
             </div>
           )}
@@ -164,8 +151,9 @@ export default function MakePaymentDialog({
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
           </div>
-
-          <Button type="submit">تأكيد الدفع</Button>
+          <Button type="submit">
+            {loading ? "جاري الدفع..." : "تأكيد الدفع"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

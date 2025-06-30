@@ -1,9 +1,3 @@
-
--- ===================================================
--- 📄 Schema: Credit System for Retailer Evaluation
--- Includes: Tables, Indexes, Trigger Functions
--- ===================================================
-
 -- ========================================
 -- 🔹 Table: users (retailers and suppliers)
 -- ========================================
@@ -53,8 +47,8 @@ CREATE TABLE IF NOT EXISTS public.payments (
   amount_paid DECIMAL(15,2) DEFAULT 0 NOT NULL,
   due_date DATE NOT NULL,
   paid_date DATE,
-  status TEXT NOT NULL CHECK (status IN ('due', 'paid', 'overdue')),
-  payment_verification TEXT DEFAULT 'pending' CHECK (payment_verification IN ('pending', 'verified', 'rejected')),
+  status TEXT CHECK (status IN ('due', 'paid', 'overdue')),
+  payment_verification TEXT CHECK (payment_verification IN ('pending', 'verified', 'rejected')),
   payment_method TEXT NOT NULL,
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
@@ -66,50 +60,27 @@ CREATE TABLE IF NOT EXISTS public.payments (
 -- ========================================
 CREATE TABLE IF NOT EXISTS public.credit_info (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  retailer_id UUID UNIQUE NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  total_contracts INTEGER DEFAULT 0,
+  retailer_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  supplier_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   active_contracts INTEGER DEFAULT 0,
   total_commitments DECIMAL(15,2) DEFAULT 0,
   paid_amount DECIMAL(15,2) DEFAULT 0,
   overdue_amount DECIMAL(15,2) DEFAULT 0,
-  payment_score INTEGER DEFAULT 0 CHECK (payment_score BETWEEN 0 AND 100),
+  payment_score INTEGER DEFAULT 50 CHECK (payment_score BETWEEN 0 AND 100),
   credit_rating CHAR(1) NOT NULL DEFAULT 'C' CHECK (credit_rating IN ('A','B','C','D','E')),
   risk_level VARCHAR(20) NOT NULL DEFAULT 'medium' CHECK (risk_level IN ('very-low','low','medium','high','very-high')),
   last_payment_date DATE,
   average_delay INTEGER DEFAULT 0,
-  contract_success_rate INTEGER DEFAULT 0,
+  contract_success_rate INTEGER,
   monthly_history JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  UNIQUE(retailer_id, supplier_id)
 );
 
--- ========================================
--- 🔹 Trigger function: auto update `updated_at`
--- ========================================
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = TIMEZONE('utc', NOW());
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- 🔹 Triggers to auto update timestamps
-CREATE TRIGGER update_users_updated_at
-BEFORE UPDATE ON public.users
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_contracts_updated_at
-BEFORE UPDATE ON public.contracts
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_payments_updated_at
-BEFORE UPDATE ON public.payments
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_credit_info_updated_at
-BEFORE UPDATE ON public.credit_info
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+ALTER TABLE credit_info 
+ADD CONSTRAINT credit_info_retailer_supplier_unique 
+UNIQUE (retailer_id, supplier_id);
 
 -- 🔹 Recommended Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);

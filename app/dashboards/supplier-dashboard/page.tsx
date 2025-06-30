@@ -4,14 +4,14 @@ import TableSkeleton from "@/components/skeletons/table-skeleton";
 import CreditInfoTab from "@/components/supplier-dashboard/credit-info-tab";
 import PaymentsVerificationTab from "@/components/supplier-dashboard/payments-verification-tab";
 import PendingContractsTab from "@/components/supplier-dashboard/pending-contracts-tab";
-import ContractsTab from "@/components/supplier-dashboard/supplier-contracts-tab";
 import RiskAssessmentTab from "@/components/supplier-dashboard/risk-assessment-tab";
+import ContractsTab from "@/components/supplier-dashboard/supplier-contracts-tab";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import getContracts from "@/services/get-contracts";
 import getUser from "@/services/get-user";
 import { AlertCircle } from "lucide-react";
 
+import { createClient } from "@/lib/supabase/server";
 import {
   Building2,
   Clock,
@@ -23,28 +23,40 @@ import { redirect, RedirectType } from "next/navigation";
 import { Suspense } from "react";
 
 export default async function SupplierDashboard() {
-  const { user, error: userError } = await getUser();
-  const { contracts, error: contractError } = await getContracts();
-  if (userError) {
+  const { user } = await getUser();
+  if (!user) {
     redirect("/", RedirectType.replace);
   }
-
-  const currentSupplierId = user?.id;
   const currentSupplier = user?.user_metadata as Database["user"];
 
-  if (contractError) {
+  const supabase = await createClient();
+
+  const [contractsFetch, paymentsFetch] = await Promise.all([
+    supabase
+      .from("contracts")
+      .select("*")
+      .eq("supplier_id", user.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false }),
+
+    supabase
+      .from("payments")
+      .select(
+        `
+				*,
+				contract:contracts!inner(supplier_id)
+			`
+      )
+      .eq("contract.supplier_id", user.id)
+      .eq("payment_verification", "pending")
+      .order("created_at", { ascending: false }),
+  ]);
+  const { data: pendingContracts, error: contractError } = contractsFetch;
+
+  const { data: pendingPayments, error: paymentError } = paymentsFetch;
+  if (contractError || paymentError) {
     return <CustomAlert message="حدث خطأ ما!" Icon={XCircle} variant="error" />;
   }
-  const getPendingContracts = () => {
-    return contracts.filter(
-      (contract) =>
-        contract.supplier_id === currentSupplierId &&
-        contract.status === "pending"
-    );
-  };
-
-  const pendingContracts = getPendingContracts();
-  const pendingCount = pendingContracts.length;
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -78,9 +90,9 @@ export default async function SupplierDashboard() {
             <TabsTrigger value="pending" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               طلبات العقود
-              {pendingCount > 0 && (
+              {pendingContracts.length > 0 && (
                 <Badge className="ml-2 bg-blue-500 text-white">
-                  {pendingCount}
+                  {pendingContracts.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -98,6 +110,11 @@ export default async function SupplierDashboard() {
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               مراجعة الدفعات
+              {pendingPayments.length > 0 && (
+                <Badge className="ml-2 bg-blue-500 text-white">
+                  {pendingPayments.length}
+                </Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 

@@ -2,8 +2,12 @@
 
 import { PATHS } from "@/lib/constants";
 import CookieStore from "@/lib/cookies";
+import { adminAuthClient } from "@/lib/supabase/auth-admin";
 import { createClient } from "@/lib/supabase/server";
-import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
+import {
+  AdminUserAttributes,
+  SignUpWithPasswordCredentials,
+} from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -104,6 +108,10 @@ export async function signup(data: SignUpWithPasswordCredentials) {
     }
     redirect(`${PATHS.auth.signin}?email=${userData.email}`);
   }
+}
+export async function updateUserById(uid: string, attr: AdminUserAttributes) {
+  const res = await adminAuthClient.updateUserById(uid, attr);
+  return res;
 }
 
 export async function signout() {

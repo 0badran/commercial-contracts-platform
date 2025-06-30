@@ -55,6 +55,20 @@ function translateRiskLevel(level: Database["credit_info"]["risk_level"]) {
       return "غير معروف";
   }
 }
+function translateContractStatus(status: Database["contract"]["status"]) {
+  switch (status) {
+    case "active":
+      return "نشط";
+    case "completed":
+      return "مكتمل";
+    case "overdue":
+      return "متأخر";
+    case "pending":
+      return "بانتظار الموافقه";
+    default:
+      return "مرفوض";
+  }
+}
 
 const isFormValidate = (form: object) =>
   Object.values(form).every((value) => value !== "");
@@ -65,6 +79,39 @@ const isUUID = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value
   );
+
+const translateRole = (role: Database["user"]["user_type"]) => {
+  switch (role) {
+    case "admin":
+      return "مسئول";
+    case "retailer":
+      return "التاجر";
+    case "supplier":
+      return "المورد";
+  }
+};
+
+function translateMonthToArabic(englishMonth: string) {
+  const monthsMap = {
+    January: "يناير",
+    February: "فبراير",
+    March: "مارس",
+    April: "أبريل",
+    May: "مايو",
+    June: "يونيو",
+    July: "يوليو",
+    August: "أغسطس",
+    September: "سبتمبر",
+    October: "أكتوبر",
+    November: "نوفمبر",
+    December: "ديسمبر",
+  };
+
+  return (
+    monthsMap[englishMonth.trim() as keyof typeof monthsMap] || englishMonth
+  );
+}
+
 export {
   cn,
   crazyToast,
@@ -73,4 +120,7 @@ export {
   isFormValidate,
   emptyCell,
   isUUID,
+  translateContractStatus,
+  translateRole,
+  translateMonthToArabic,
 };

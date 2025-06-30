@@ -11,18 +11,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { allContracts } from "@/data/users";
+import { useContracts } from "@/hooks/use-contracts";
+import { useUsers } from "@/hooks/use-users";
 import { Edit, Eye, Search } from "lucide-react";
 import { useState } from "react";
+import CustomAlert from "../shared/custom-alert";
 import StatusBadge from "../shared/status-badge";
+import TableSkeleton from "../skeletons/table-skeleton";
+import { emptyCell } from "@/lib/utils";
 
 export default function ContractsTab() {
   const [searchTerm, setSearchTerm] = useState("");
+  const { getUserById, error: userError, loading: userLoading } = useUsers();
+  const { contracts, loading, error } = useContracts();
 
-  const filteredContracts = allContracts.filter(
+  if (loading || userLoading) {
+    return <TableSkeleton />;
+  }
+  if (error || userError) {
+    return <CustomAlert message="فشل في تحمل العقود" />;
+  }
+  const filteredContracts = contracts.filter(
     (contract) =>
-      contract.retailerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contract.supplierName.toLowerCase().includes(searchTerm.toLowerCase())
+      getUserById(contract.retailer_id)
+        ?.commercial_name.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      getUserById(contract.supplier_id)
+        ?.commercial_name.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -60,31 +76,37 @@ export default function ContractsTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredContracts.map((contract) => (
-                <TableRow key={contract.id}>
-                  <TableCell className="font-medium">
-                    {contract.retailerName}
-                  </TableCell>
-                  <TableCell>{contract.supplierName}</TableCell>
-                  <TableCell>{contract.amount.toLocaleString()} ر.س</TableCell>
-                  <TableCell>{contract.startDate}</TableCell>
-                  <TableCell>{contract.endDate}</TableCell>
-                  <TableCell>{contract.paymentTerms}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={contract.status} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredContracts.map((contract) => {
+                const retailer = getUserById(contract.retailer_id);
+                const supplier = getUserById(contract.supplier_id);
+                return (
+                  <TableRow key={contract.id}>
+                    <TableCell className="font-medium">
+                      {retailer?.commercial_name}
+                    </TableCell>
+                    <TableCell>{supplier?.commercial_name}</TableCell>
+                    <TableCell>
+                      {contract.amount.toLocaleString()} ر.س
+                    </TableCell>
+                    <TableCell>{contract.start_date || emptyCell}</TableCell>
+                    <TableCell>{contract.end_date || emptyCell}</TableCell>
+                    <TableCell>{contract.payment_terms}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={contract.status!} />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

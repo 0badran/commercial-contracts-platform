@@ -73,6 +73,7 @@
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "postcss": "^8.5",
+    "supabase": "^2.26.9",
     "tailwindcss": "^4.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5",
@@ -82,6 +83,9 @@
     "overrides": {
       "@types/react": "19.1.8",
       "@types/react-dom": "19.1.6"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "supabase"
+    ]
   }
 }

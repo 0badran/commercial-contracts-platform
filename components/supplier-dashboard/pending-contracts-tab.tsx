@@ -53,13 +53,15 @@ export default function PendingContractsTab() {
     contractId: string,
     status: Database["contract"]["status"]
   ) {
-    const { error } = await updateContract(contractId, {
-      status,
-    });
+    const { error } = await updateContract(contractId, { status });
     revalidatePage(PATHS.dashboards.supplier);
+    console.log({ error });
 
     if (error) {
-      return crazyToast("حدث خطأ أثناء تحديث حالة العقد", "error");
+      return crazyToast(
+        `حدث خطأ أثناء تحديث حالة العقد: ${error.code}`,
+        "error"
+      );
     }
     refetch();
     crazyToast(

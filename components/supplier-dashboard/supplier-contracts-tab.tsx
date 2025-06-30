@@ -22,7 +22,7 @@ import { Eye, EyeOff, FileText } from "lucide-react";
 import { useState } from "react";
 import CustomAlert from "../shared/custom-alert";
 import EmptyState from "../shared/empty-state";
-import SearchUsersInput from "../shared/search-users-input";
+import SearchUsersInput from "./search-users-input";
 import StatusBadge from "../shared/status-badge";
 import TableSkeleton from "../skeletons/table-skeleton";
 import { emptyCell } from "@/lib/utils";

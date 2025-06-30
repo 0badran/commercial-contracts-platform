@@ -19,9 +19,12 @@ import {
 import { useContracts } from "@/hooks/use-contracts";
 import { usePayments } from "@/hooks/use-payments";
 import { useUsers } from "@/hooks/use-users";
-import { crazyToast } from "@/lib/utils";
+import { crazyToast, emptyCell } from "@/lib/utils";
 import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import TableSkeleton from "../skeletons/table-skeleton";
+import revalidatePage from "@/services/revalidate-page";
+import { PATHS } from "@/lib/constants";
+import { format } from "date-fns";
 
 export default function PaymentsVerificationTab() {
   const { getUserById, currentUser } = useUsers();
@@ -29,7 +32,7 @@ export default function PaymentsVerificationTab() {
   const {
     loading: paymentLoading,
     payments,
-    refetch,
+    refetch: paymentsRefetch,
     updatePayment,
     error: paymentError,
   } = usePayments({
@@ -39,6 +42,8 @@ export default function PaymentsVerificationTab() {
     getContractById,
     loading: contractsLoading,
     error: contractsError,
+    updateContract,
+    refetch: contractsRefetch,
   } = useContracts();
 
   if (paymentLoading || contractsLoading) {
@@ -53,23 +58,56 @@ export default function PaymentsVerificationTab() {
 
   async function handlePaymentVerification(
     paymentId: string,
-    status: "verified" | "rejected"
+    status: "verified" | "rejected",
+    contract: Database["contract"] | null
   ) {
+    // Calculate overdue paid
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(contract?.due_date || new Date());
+    dueDate.setHours(0, 0, 0, 0);
+    const isOverdue = today > dueDate;
+
     const { error } = await updatePayment(paymentId, {
       payment_verification: status,
+      status: status === "verified" ? (isOverdue ? "overdue" : "paid") : "due",
     });
+
     if (error) {
-      crazyToast(
+      return crazyToast(
         `حدث خطأ أثناء ${status === "verified" ? "تأكيد" : "رفض"} الدفعة`,
         "error"
       );
-    } else {
-      crazyToast(
-        `تم ${status === "verified" ? "تأكيد" : "رفض"} الدفعة بنجاح`,
-        "success"
-      );
-      refetch();
     }
+    crazyToast(
+      `تم ${status === "verified" ? "تأكيد" : "رفض"} الدفعة بنجاح`,
+      "success"
+    );
+
+    // If payment success update contract
+    if (status === "verified") {
+      contractsRefetch();
+      const paymentTerms = contract!.payment_terms;
+      const newDueDate = new Date(contract?.due_date || new Date());
+      newDueDate.setDate(newDueDate.getDate() + paymentTerms);
+      const paymentCount = payments.filter(
+        (p) =>
+          p.contract_id === contract!.id &&
+          p.payment_verification === "verified"
+      ).length;
+      const isPaid = paymentCount > Number(contract?.number_of_payments || 0);
+      const updates: Database["contract"] = {};
+      if (isPaid) {
+        updates.status = "completed";
+        updates.paid_date = format(today, "yyyy-MM-dd");
+      } else {
+        updates.due_date = format(newDueDate, "yyyy-MM-dd");
+      }
+      const { data, error } = await updateContract(contract?.id || "", updates);
+      console.log({ data, error });
+    }
+    paymentsRefetch();
+    revalidatePage(PATHS.dashboards.supplier);
   }
 
   return (
@@ -106,27 +144,36 @@ export default function PaymentsVerificationTab() {
                     <TableCell>
                       {payment.amount_paid?.toLocaleString()} ر.س
                     </TableCell>
-                    <TableCell>{payment.paid_date || "-"}</TableCell>
+                    <TableCell>{payment.paid_date}</TableCell>
                     <TableCell>{payment.payment_method}</TableCell>
-                    <TableCell>{payment.notes || "-"}</TableCell>
-                    <TableCell className="space-x-2 rtl:space-x-reverse">
+                    <TableCell>{payment.notes || emptyCell}</TableCell>
+                    <TableCell className="space-x-2">
                       <Button
                         variant="outline"
                         size="sm"
                         className="text-green-600 border-green-200 hover:bg-green-50"
                         onClick={() =>
-                          handlePaymentVerification(payment.id!, "verified")
+                          handlePaymentVerification(
+                            payment.id!,
+                            "verified",
+                            contract
+                          )
                         }
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
                         تأكيد
                       </Button>
+
                       <Button
                         variant="outline"
                         size="sm"
                         className="text-red-600 border-red-200 hover:bg-red-50"
                         onClick={() =>
-                          handlePaymentVerification(payment.id!, "rejected")
+                          handlePaymentVerification(
+                            payment.id!,
+                            "rejected",
+                            contract
+                          )
                         }
                       >
                         <XCircle className="h-4 w-4 mr-1" />

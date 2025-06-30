@@ -55,7 +55,7 @@ export function useContracts() {
       .update(updates)
       .eq("id", id)
       .select()
-      .single();
+      .single<Contract>();
 
     if (updateError) {
       return { data: null, error: updateError };

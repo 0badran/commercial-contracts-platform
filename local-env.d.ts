@@ -61,7 +61,7 @@ interface Database {
   credit_info: {
     id?: string; // UUID DEFAULT gen_random_uuid()
     retailer_id: string;
-    total_contracts?: number;
+    supplier_id: string;
     active_contracts?: number;
     total_commitments?: number;
     paid_amount?: number;
@@ -71,7 +71,7 @@ interface Database {
     risk_level?: "very-low" | "low" | "medium" | "high" | "very-high"; // DEFAULT 'medium'
     last_payment_date?: string;
     average_delay?: number;
-    contract_success_rate?: number;
+    contract_success_rate: number | null;
     monthly_history?: {
       month: string;
       due: number;

@@ -26,8 +26,10 @@ import { isFormValidate } from "@/lib/utils";
 
 export default function CreateContractDialog({
   createContract,
+  refetch,
 }: {
   createContract: (Contract: Database["contract"]) => Promise<any>;
+  refetch: () => void;
 }) {
   const {
     getUsersByType,
@@ -35,6 +37,7 @@ export default function CreateContractDialog({
     error: suppliersError,
     currentUser,
   } = useUsers();
+
   const [newContract, setNewContract] = useState({
     amount: "",
     paymentTerms: "",
@@ -89,10 +92,10 @@ export default function CreateContractDialog({
     setContractsLoading(false);
     if (error) {
       console.log("Error creating contract:", error);
-
       setMessages({ message: "حدث خطأ أثناء إضافة العقد.", stats: "error" });
       return;
     }
+    refetch();
     setMessages({
       message: "تم إضافة العقد بنجاح.",
       stats: "success",

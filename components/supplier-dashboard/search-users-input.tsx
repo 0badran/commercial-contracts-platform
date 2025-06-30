@@ -16,9 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { getCreditRatingColor, translateRiskLevel } from "@/lib/utils";
-import RiskIcon from "./risk-icon";
+import {
+  emptyCell,
+  getCreditRatingColor,
+  translateRiskLevel,
+} from "@/lib/utils";
+import RiskIcon from "../shared/risk-icon";
 import { Badge } from "../ui/badge";
+import { useContracts } from "@/hooks/use-contracts";
 
 interface SearchUsersInputProps {
   title: string;
@@ -41,11 +46,11 @@ export default function SearchUsersInput({
   const [searchType, setSearchType] = useState<
     "full_name" | "commercial_identity_number"
   >("full_name");
-
+  const { getCurrentUserContracts } = useContracts();
   const [selectedUser, setSelectedUser] = useState<Database["user"] | null>(
     null
   );
-
+  const { data } = getCurrentUserContracts();
   const filteredUsers = () => {
     return users.filter((user) => {
       if (searchType === "full_name") {
@@ -60,7 +65,7 @@ export default function SearchUsersInput({
 
   return (
     <>
-      <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50">
+      <Card className="card-hover bg-card/50 backdrop-blur-xs border-border/50 mb-3">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
           <CardDescription>{des}</CardDescription>
@@ -108,6 +113,10 @@ export default function SearchUsersInput({
       <div className="space-y-2">
         {filteredUsers().map((retailer) => {
           const creditInfo = getCreditById(retailer.id!);
+          const totalContracts = data.filter(
+            (c) => c.retailer_id === retailer.id
+          ).length;
+
           return (
             <div
               key={retailer.id}
@@ -125,7 +134,7 @@ export default function SearchUsersInput({
                 <div>
                   <h3 className="font-medium text-sm">{retailer.full_name}</h3>
                   <p className="text-xs text-gray-600 mt-1">
-                    عقود {creditInfo?.total_contracts} •{" "}
+                    عقود {totalContracts} •{" "}
                     {creditInfo?.paid_amount!.toLocaleString()} ر.س
                   </p>
                   <p className="text-xs text-gray-500">
@@ -136,7 +145,7 @@ export default function SearchUsersInput({
                   <Badge
                     className={getCreditRatingColor(creditInfo?.credit_rating)}
                   >
-                    {creditInfo?.credit_rating}
+                    {creditInfo?.credit_rating || emptyCell}
                   </Badge>
                   <div className="flex items-center gap-1">
                     <RiskIcon risk={creditInfo?.risk_level} />

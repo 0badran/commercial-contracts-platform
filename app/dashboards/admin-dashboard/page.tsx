@@ -1,16 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BarChart3, Building2, FileText, Shield, Store } from "lucide-react"
-import OverviewTab from "@/components/admin-dashboard/overview-tab"
-import RetailersTab from "@/components/admin-dashboard/retailers-tab"
-import SuppliersTab from "@/components/admin-dashboard/suppliers-tab"
-import ContractsTab from "@/components/admin-dashboard/contracts-tab"
+import ContractsTab from "@/components/admin-dashboard/contracts-tab";
+import OverviewTab from "@/components/admin-dashboard/overview-tab";
+import RetailersTab from "@/components/admin-dashboard/retailers-tab";
+import SuppliersTab from "@/components/admin-dashboard/suppliers-tab";
+import SignoutButton from "@/components/shared/signout-button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart3, Building2, FileText, Shield, Store } from "lucide-react";
+import { useState } from "react";
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"overview" | "retailers" | "suppliers" | "contracts">("overview")
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "retailers" | "suppliers" | "contracts"
+  >("overview");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -20,19 +22,25 @@ export default function AdminDashboard() {
             <div className="flex items-center">
               <Shield className="h-8 w-8 text-purple-600 mr-3" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">لوحة تحكم المدير</h1>
-                <p className="text-sm text-gray-600">إدارة شاملة لجميع عمليات المنصة</p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  لوحة تحكم المدير
+                </h1>
+                <p className="text-sm text-gray-600">
+                  إدارة شاملة لجميع عمليات المنصة
+                </p>
               </div>
             </div>
-            <Button variant="outline" onClick={() => (window.location.href = "/")}>
-              تسجيل الخروج
-            </Button>
+            <SignoutButton />
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+        <Tabs
+          dir="rtl"
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as any)}
+        >
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -70,5 +78,5 @@ export default function AdminDashboard() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
