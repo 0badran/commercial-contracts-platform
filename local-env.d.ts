@@ -4,10 +4,10 @@ type ContractStatus =
   | "pending"
   | "active"
   | "completed"
-  | "cancelled"
+  | "overdue"
   | "rejected";
 
-type PaymentStatus = "due" | "paid" | "overdue" | "partial";
+type PaymentStatus = "due" | "paid" | "overdue";
 
 interface Database {
   user: {
@@ -32,12 +32,12 @@ interface Database {
     retailer_id: string;
     amount: number;
     status?: ContractStatus; // DEFAULT 'pending'
-    payment_terms: string;
+    payment_terms: 15 | 30 | 45 | 60;
     description?: string | null;
     number_of_payments: number;
     start_date?: string | null;
     end_date?: string | null;
-    due_date: string;
+    due_date?: string;
     paid_date?: string | null;
     created_at?: string;
     updated_at?: string;
@@ -52,6 +52,7 @@ interface Database {
     paid_date?: string | null;
     status?: PaymentStatus; // DEFAULT 'due'
     payment_method?: string | null;
+    payment_verification?: "pending" | "verified" | "rejected";
     notes?: string | null;
     created_at?: string;
     updated_at?: string;
@@ -60,7 +61,7 @@ interface Database {
   credit_info: {
     id?: string; // UUID DEFAULT gen_random_uuid()
     retailer_id: string;
-    total_contracts?: number;
+    supplier_id: string;
     active_contracts?: number;
     total_commitments?: number;
     paid_amount?: number;
@@ -70,7 +71,7 @@ interface Database {
     risk_level?: "very-low" | "low" | "medium" | "high" | "very-high"; // DEFAULT 'medium'
     last_payment_date?: string;
     average_delay?: number;
-    contract_success_rate?: number;
+    contract_success_rate: number | null;
     monthly_history?: {
       month: string;
       due: number;

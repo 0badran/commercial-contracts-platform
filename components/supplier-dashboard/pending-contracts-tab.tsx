@@ -16,28 +16,58 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useContracts } from "@/hooks/use-contracts";
 import { useUsers } from "@/hooks/use-users";
 import { crazyToast } from "@/lib/utils";
-import updateContractStatus from "@/services/update-contract-status";
-import { Clock, CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, Clock, XCircle } from "lucide-react";
+import EmptyState from "../shared/empty-state";
+import CustomAlert from "../shared/custom-alert";
+import TableSkeleton from "../skeletons/table-skeleton";
+import revalidatePage from "@/services/revalidate-page";
+import { PATHS } from "@/lib/constants";
 
-interface PendingContractsTabProps {
-  pendingContracts: Database["contract"][];
-}
-
-export default function PendingContractsTab({
-  pendingContracts,
-}: PendingContractsTabProps) {
+export default function PendingContractsTab() {
   const { getUserById } = useUsers();
+  const { updateContract, refetch, getCurrentUserContracts, loading } =
+    useContracts();
+  const { data, error } = getCurrentUserContracts();
 
+  if (loading) {
+    return <TableSkeleton />;
+  }
+
+  if (error) {
+    return <CustomAlert message={error.message} variant="error" />;
+  }
+
+  if (data.length === 0) {
+    return (
+      <EmptyState
+        title="لا يوجد عقود حاليا."
+        description="لم يتم اضافة اي عقد بعد"
+        icon={Clock}
+      />
+    );
+  }
   async function handleContractStatus(
     contractId: string,
     status: Database["contract"]["status"]
   ) {
-    const { error } = await updateContractStatus(contractId, status);
+    const { error } = await updateContract(contractId, { status });
+    revalidatePage(PATHS.dashboards.supplier);
+    console.log({ error });
+
     if (error) {
-      crazyToast("حدث خطأ أثناء تحديث حالة العقد", "error");
+      return crazyToast(
+        `حدث خطأ أثناء تحديث حالة العقد: ${error.code}`,
+        "error"
+      );
     }
+    refetch();
+    crazyToast(
+      `تم ${status === "active" ? "قبول" : "رفض"} العقد بنجاح`,
+      "success"
+    );
   }
 
   return (
@@ -50,59 +80,63 @@ export default function PendingContractsTab({
         <CardDescription>العقود التي تنتظر موافقتك</CardDescription>
       </CardHeader>
       <CardContent>
-        {pendingContracts.length > 0 ? (
+        {data.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>التاجر</TableHead>
                 <TableHead>المبلغ</TableHead>
-                <TableHead>تاريخ البداية</TableHead>
-                <TableHead>تاريخ الانتهاء</TableHead>
                 <TableHead>شروط الدفع</TableHead>
                 <TableHead>الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pendingContracts.map((contract) => (
-                <TableRow key={contract.id}>
-                  <TableCell className="font-medium">
-                    {getUserById(contract.retailer_id)?.full_name}
-                  </TableCell>
-                  <TableCell>{contract.amount.toLocaleString()} ر.س</TableCell>
-                  <TableCell>{contract.start_date}</TableCell>
-                  <TableCell>{contract.end_date}</TableCell>
-                  <TableCell>{contract.payment_terms}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex items-center gap-1 text-green-600 border-green-200 hover:bg-green-50"
-                        onClick={() =>
-                          handleContractStatus(contract.id as string, "active")
-                        }
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                        قبول
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex items-center gap-1 text-red-600 border-red-200 hover:bg-red-50"
-                        onClick={() =>
-                          handleContractStatus(
-                            contract.id as string,
-                            "rejected"
-                          )
-                        }
-                      >
-                        <XCircle className="h-4 w-4" />
-                        رفض
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {data.map((contract) => {
+                if (contract.status !== "pending") return null;
+                return (
+                  <TableRow key={contract.id}>
+                    <TableCell className="font-medium">
+                      {getUserById(contract.retailer_id)?.full_name}
+                    </TableCell>
+                    <TableCell>
+                      {contract.amount.toLocaleString()} ر.س
+                    </TableCell>
+                    <TableCell>{contract.payment_terms}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex items-center gap-1 text-green-600 border-green-200 hover:bg-green-50"
+                          onClick={() =>
+                            handleContractStatus(
+                              contract.id as string,
+                              "active"
+                            )
+                          }
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          قبول
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex items-center gap-1 text-red-600 border-red-200 hover:bg-red-50"
+                          onClick={() =>
+                            handleContractStatus(
+                              contract.id as string,
+                              "rejected"
+                            )
+                          }
+                        >
+                          <XCircle className="h-4 w-4" />
+                          رفض
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         ) : (

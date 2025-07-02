@@ -2,11 +2,11 @@ import { clsx, type ClassValue } from "clsx";
 import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs: ClassValue[]) {
+function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function crazyToast(message: string, type?: "success" | "error") {
+function crazyToast(message: string, type?: "success" | "error") {
   switch (type) {
     case "error":
       toast.error(message);
@@ -20,7 +20,7 @@ export function crazyToast(message: string, type?: "success" | "error") {
   }
 }
 
-export const getCreditRatingColor = (
+const getCreditRatingColor = (
   rating: Database["credit_info"]["credit_rating"]
 ) => {
   switch (rating) {
@@ -39,12 +39,88 @@ export const getCreditRatingColor = (
   }
 };
 
-export const getContractedRetailers = (
-  contracts: Database["contract"][],
-  users: Database["user"][]
-) => {
-  const retailerIds = new Set(contracts.map((c) => c.retailer_id));
-  return users.filter(
-    (u) => u.user_type === "retailer" && retailerIds.has(u.id!)
+function translateRiskLevel(level: Database["credit_info"]["risk_level"]) {
+  switch (level) {
+    case "very-low":
+      return "منخفض جداً";
+    case "low":
+      return "منخفض";
+    case "medium":
+      return "متوسط";
+    case "high":
+      return "مرتفع";
+    case "very-high":
+      return "مرتفع جداً";
+    default:
+      return "غير معروف";
+  }
+}
+function translateContractStatus(status: Database["contract"]["status"]) {
+  switch (status) {
+    case "active":
+      return "نشط";
+    case "completed":
+      return "مكتمل";
+    case "overdue":
+      return "متأخر";
+    case "pending":
+      return "بانتظار الموافقه";
+    default:
+      return "مرفوض";
+  }
+}
+
+const isFormValidate = (form: object) =>
+  Object.values(form).every((value) => value !== "");
+
+const emptyCell = "-";
+
+const isUUID = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
   );
+
+const translateRole = (role: Database["user"]["user_type"]) => {
+  switch (role) {
+    case "admin":
+      return "مسئول";
+    case "retailer":
+      return "التاجر";
+    case "supplier":
+      return "المورد";
+  }
+};
+
+function translateMonthToArabic(englishMonth: string) {
+  const monthsMap = {
+    January: "يناير",
+    February: "فبراير",
+    March: "مارس",
+    April: "أبريل",
+    May: "مايو",
+    June: "يونيو",
+    July: "يوليو",
+    August: "أغسطس",
+    September: "سبتمبر",
+    October: "أكتوبر",
+    November: "نوفمبر",
+    December: "ديسمبر",
+  };
+
+  return (
+    monthsMap[englishMonth.trim() as keyof typeof monthsMap] || englishMonth
+  );
+}
+
+export {
+  cn,
+  crazyToast,
+  getCreditRatingColor,
+  translateRiskLevel,
+  isFormValidate,
+  emptyCell,
+  isUUID,
+  translateContractStatus,
+  translateRole,
+  translateMonthToArabic,
 };

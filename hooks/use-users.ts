@@ -1,32 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createClient } from "../lib/supabase/client";
 import useUser from "./use-user";
 
 export function useUsers() {
-  const [users, setUsers] = useState<Database["user"][]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
+  const {
+    data,
+    error,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () =>
+      supabase
+        .from("users")
+        .select("*")
+        .order("created_at", { ascending: false }),
+  });
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      return setError("حدث خطأ في جلب المستخدمين");
-    }
-    setUsers(data || []);
-  };
-
-  useEffect(() => {
-    fetchUsers();
-    // eslint-disable-next-line
-  }, []);
+  const users: Database["user"][] = data?.data || [];
 
   const { user } = useUser();
 
@@ -67,13 +61,16 @@ export function useUsers() {
   const getUsersContractedWithCurrentUser = (
     contracts: Database["contract"][]
   ) => {
-    const userType = (user?.user_metadata as Database["user"]).user_type;
+    const userType = (user?.user_metadata as Database["user"])?.user_type;
+    if (!userType) {
+      return { data: [], error: new Error("USER_TYPE") };
+    }
     const usersIds = new Set(
-      contracts.map((c) =>
-        userType === "retailer" ? c.retailer_id : c.supplier_id
+      (contracts || []).map((c) =>
+        userType === "retailer" ? c.supplier_id : c.retailer_id
       )
     );
-    return users.filter((u) => usersIds.has(u.id!));
+    return { data: users.filter((u) => usersIds.has(u.id!)), error: null };
   };
   return {
     users,
@@ -83,7 +80,7 @@ export function useUsers() {
     // updateUser,
     currentUser: user,
     getUsersByType,
-    refetch: fetchUsers,
+    refetch,
     getUsersContractedWithCurrentUser,
     getUserById,
   };

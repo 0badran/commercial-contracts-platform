@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 /*
   ---break---
 */
@@ -95,7 +95,7 @@
 
 @utility space-x-reverse {
   /* RTL support improvements */
-  [dir='rtl'] & > :not([hidden]) ~ :not([hidden]) {
+  [dir="rtl"] & > :not([hidden]) ~ :not([hidden]) {
     --tw-space-x-reverse: 1;
   }
 }
@@ -280,4 +280,6 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+.progress-bar {
 }

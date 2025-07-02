@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useContracts } from "@/hooks/use-contracts";
 import { usePayments } from "@/hooks/use-payments";
 import { User } from "@supabase/supabase-js";
 import {
@@ -10,33 +11,30 @@ import {
   DollarSign,
   FileText,
 } from "lucide-react";
-import { use } from "react";
 
-export default function StatsCards({
-  user,
-  contractPromise,
-}: {
-  user: User | null;
-  contractPromise: Promise<any>;
-}) {
-  const { data } = use(contractPromise);
-  const contracts: Database["contract"][] = data;
-  const activeContracts = contracts.filter((c) => c.status === "active");
-  const pendingContracts = contracts.filter((c) => c.status === "pending");
-  const totalAmount = activeContracts.reduce(
+export default function StatsCards({ user }: { user: User | null }) {
+  const { getCurrentUserContracts } = useContracts();
+  const { data: contracts } = getCurrentUserContracts();
+  const activeContracts = contracts?.filter((c) => c.status === "active");
+  const pendingContracts = contracts?.filter((c) => c.status === "pending");
+  const totalAmount = activeContracts?.reduce(
     (sum, contract) => sum + contract.amount,
     0
   );
-  const { payments } = usePayments({ userId: user?.id });
-  // Payment calculations
+  const { payments } = usePayments({ retailerId: user?.id });
+
   const totalPaid = payments
-    .filter((p) => p.status === "paid")
+    .filter((p) => p.status === "paid" && p.payment_verification === "verified")
     .reduce((sum, payment) => sum + (payment.amount_paid || 0), 0);
 
   const overduePayments = payments.filter((p) => {
     const dueDate = new Date(p.due_date);
     const today = new Date();
-    return p.status === "due" && dueDate < today;
+    return (
+      p.status === "due" &&
+      p.payment_verification === "verified" &&
+      dueDate < today
+    );
   });
 
   return (
@@ -47,7 +45,7 @@ export default function StatsCards({
           <FileText className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{activeContracts.length}</div>
+          <div className="text-2xl font-bold">{activeContracts?.length}</div>
           <p className="text-xs text-muted-foreground">عقد نشط حالياً</p>
         </CardContent>
       </Card>
@@ -60,7 +58,7 @@ export default function StatsCards({
           <Clock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{pendingContracts.length}</div>
+          <div className="text-2xl font-bold">{pendingContracts?.length}</div>
           <p className="text-xs text-muted-foreground">عقد بانتظار الموافقة</p>
         </CardContent>
       </Card>
@@ -72,7 +70,7 @@ export default function StatsCards({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {totalAmount.toLocaleString()}
+            {totalAmount?.toLocaleString()}
           </div>
           <p className="text-xs text-muted-foreground">ريال سعودي</p>
         </CardContent>

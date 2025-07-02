@@ -22,7 +22,7 @@ export default function StatusBadge({
           return "bg-red-100 text-red-800";
         case "completed":
           return "bg-secondary text-secondary-foreground";
-        case "cancelled":
+        case "overdue":
           return "bg-amber-50 text-amber-800";
         default:
           return "bg-black text-white";

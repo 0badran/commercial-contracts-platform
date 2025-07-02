@@ -1,11 +1,24 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useContracts } from "@/hooks/use-contracts";
+import { useUsers } from "@/hooks/use-users";
+import { Edit, Eye, Plus, Search } from "lucide-react";
+import { useState } from "react";
+import CustomAlert from "../shared/custom-alert";
+import SignupForm from "../shared/signup-form";
+import TableSkeleton from "../skeletons/table-skeleton";
 import {
   Dialog,
   DialogContent,
@@ -13,41 +26,34 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Edit, Eye, Plus, Search, TrendingUp } from "lucide-react"
-import { suppliers } from "@/data/suppliers"
+} from "../ui/dialog";
 
 export default function SuppliersTab() {
-  const [isAddingSupplier, setIsAddingSupplier] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [newSupplier, setNewSupplier] = useState({
-    name: "",
-    category: "",
-    contactPerson: "",
-    email: "",
-    phone: "",
-  })
+  const [searchTerm, setSearchTerm] = useState("");
+  const [open, setOpen] = useState(false);
+  const { getUsersByType, loading, error } = useUsers();
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const filteredSuppliers = suppliers.filter(
-    (supplier) =>
-      supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      supplier.category.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const {
+    getContractsByUserId,
+    loading: contractLoading,
+    error: contractError,
+  } = useContracts();
 
-  const handleAddSupplier = () => {
-    // In real app, this would make an API call
-    console.log("Adding supplier:", newSupplier)
-    setNewSupplier({
-      name: "",
-      category: "",
-      contactPerson: "",
-      email: "",
-      phone: "",
-    })
-    setIsAddingSupplier(false)
+  if (loading || contractLoading) {
+    return <TableSkeleton />;
   }
+  if (error || contractError) {
+    return (
+      <CustomAlert message="فشل في احضار الموردين والعقود" variant="error" />
+    );
+  }
+  const suppliers = getUsersByType("supplier");
+  const filteredSuppliers = suppliers.filter(
+    (retailer) =>
+      retailer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      retailer.commercial_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -56,82 +62,24 @@ export default function SuppliersTab() {
           <h2 className="text-2xl font-bold">إدارة الموردين</h2>
           <p className="text-gray-600">عرض وإدارة جميع الموردين المسجلين</p>
         </div>
-        <Dialog open={isAddingSupplier} onOpenChange={setIsAddingSupplier}>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               إضافة مورد جديد
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="w-sm md:w-lg overflow-y-scroll max-h-[98vh]">
             <DialogHeader>
-              <DialogTitle>إضافة مورد جديد</DialogTitle>
-              <DialogDescription>أدخل بيانات المورد الجديد</DialogDescription>
+              <DialogTitle>
+                {userId ? "تعديل بيانات المورد" : "إضافة مورد جديد"}
+              </DialogTitle>
+              <DialogDescription>أدخل بيانات المورد</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="supplier-name">اسم الشركة</Label>
-                <Input
-                  id="supplier-name"
-                  value={newSupplier.name}
-                  onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
-                  placeholder="أدخل اسم الشركة"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">التصنيف</Label>
-                <Select
-                  value={newSupplier.category}
-                  onValueChange={(value) => setNewSupplier({ ...newSupplier, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر التصنيف" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="مواد غذائية">مواد غذائية</SelectItem>
-                    <SelectItem value="أجهزة كهربائية">أجهزة كهربائية</SelectItem>
-                    <SelectItem value="ملابس">ملابس</SelectItem>
-                    <SelectItem value="مواد بناء">مواد بناء</SelectItem>
-                    <SelectItem value="أثاث">أثاث</SelectItem>
-                    <SelectItem value="أخرى">أخرى</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact-person">الشخص المسؤول</Label>
-                <Input
-                  id="contact-person"
-                  value={newSupplier.contactPerson}
-                  onChange={(e) => setNewSupplier({ ...newSupplier, contactPerson: e.target.value })}
-                  placeholder="أدخل اسم الشخص المسؤول"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="supplier-email">البريد الإلكتروني</Label>
-                <Input
-                  id="supplier-email"
-                  type="email"
-                  value={newSupplier.email}
-                  onChange={(e) => setNewSupplier({ ...newSupplier, email: e.target.value })}
-                  placeholder="example@company.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="supplier-phone">رقم الهاتف</Label>
-                <Input
-                  id="supplier-phone"
-                  value={newSupplier.phone}
-                  onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
-                  placeholder="05xxxxxxxx"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsAddingSupplier(false)}>
-                إلغاء
-              </Button>
-              <Button onClick={handleAddSupplier}>إضافة المورد</Button>
-            </div>
+            <SignupForm userType="supplier" userId={userId} />
+            <Button variant={"outline"} onClick={() => setOpen(false)}>
+              إلغاء
+            </Button>
           </DialogContent>
         </Dialog>
       </div>
@@ -151,47 +99,67 @@ export default function SuppliersTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>اسم الشركة</TableHead>
-                <TableHead>التصنيف</TableHead>
-                <TableHead>الشخص المسؤول</TableHead>
+                <TableHead>اسم المورد</TableHead>
+                <TableHead>المالك</TableHead>
                 <TableHead>البريد الإلكتروني</TableHead>
                 <TableHead>الهاتف</TableHead>
-                <TableHead>التقييم</TableHead>
+                <TableHead>العقود</TableHead>
+                <TableHead>التصنيف</TableHead>
+                <TableHead>الحالة</TableHead>
                 <TableHead>الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSuppliers.map((supplier) => (
-                <TableRow key={supplier.id}>
-                  <TableCell className="font-medium">{supplier.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{supplier.category}</Badge>
-                  </TableCell>
-                  <TableCell>{supplier.contactPerson}</TableCell>
-                  <TableCell>{supplier.email}</TableCell>
-                  <TableCell>{supplier.phone}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <TrendingUp className="h-4 w-4 text-yellow-500 mr-1" />
-                      <span>{supplier.rating}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredSuppliers.map((supplier) => {
+                const userContracts = getContractsByUserId(supplier.id!).data;
+                const isActive = userContracts.find(
+                  (c) => c.status === "active"
+                );
+                return (
+                  <TableRow key={supplier.id}>
+                    <TableCell className="font-medium">
+                      {supplier.commercial_name}
+                    </TableCell>
+                    <TableCell>{supplier.full_name}</TableCell>
+                    <TableCell>{supplier.email}</TableCell>
+                    <TableCell>{supplier.phone}</TableCell>
+                    <TableCell>{userContracts.length}</TableCell>
+                    <TableCell>{supplier.business_type}</TableCell>
+                    <TableCell>
+                      {isActive ? (
+                        <Badge className="bg-green-100 text-green-800">
+                          نشط
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-100 text-red-800">
+                          غير نشط
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setUserId(supplier.id!);
+                            setOpen(true);
+                          }}
+                          size="sm"
+                          variant="outline"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

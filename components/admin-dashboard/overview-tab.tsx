@@ -1,11 +1,72 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Building2, CheckCircle, Clock, DollarSign, FileText, Store, XCircle } from "lucide-react"
-import { systemStats, allContracts } from "@/data/users"
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { systemStats } from "@/data/users";
+import { useContracts } from "@/hooks/use-contracts";
+import { useUsers } from "@/hooks/use-users";
+import { translateContractStatus } from "@/lib/utils";
+import {
+  Building2,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  FileText,
+  Store,
+  X,
+  XCircle,
+} from "lucide-react";
+import CustomAlert from "../shared/custom-alert";
+import StatsCardSkelton from "../skeletons/stats-card-skelton";
+import TableSkeleton from "../skeletons/table-skeleton";
 
 export default function OverviewTab() {
+  const {
+    getUsersByType,
+    getUserById,
+    loading: userLoading,
+    error: userError,
+  } = useUsers();
+  const {
+    contracts,
+    loading: contractLoading,
+    error: contractError,
+  } = useContracts();
+  if (contractLoading || userLoading) {
+    return (
+      <div className="space-y-6">
+        <StatsCardSkelton />
+        <TableSkeleton />
+      </div>
+    );
+  }
+
+  if (userError || contractError) {
+    return (
+      <CustomAlert
+        message="حدث خطا حاول الخروج والدخول مجددا"
+        Icon={X}
+        variant="error"
+      />
+    );
+  }
+  const totalRetailers = getUsersByType("retailer").length;
+  const totalSuppliers = getUsersByType("supplier").length;
+  const totalContracts = contracts.length;
+  const totalValue = contracts.reduce((n, c) => c.amount + n, 0);
+  const activeContracts = contracts.filter((c) => c.status === "active").length;
+  const rejectedContracts = contracts.filter(
+    (c) => c.status === "rejected"
+  ).length;
+  const pendingContracts = contracts.filter(
+    (c) => c.status === "pending"
+  ).length;
   return (
     <div className="space-y-6">
       {/* Statistics Cards */}
@@ -16,18 +77,20 @@ export default function OverviewTab() {
             <Store className="h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.totalRetailers}</div>
+            <div className="text-2xl font-bold">{totalRetailers}</div>
             <p className="text-xs opacity-80">تاجر مسجل</p>
           </CardContent>
         </Card>
 
         <Card className="card-hover bg-linear-to-br from-green-500 to-green-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي الموردين</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              إجمالي الموردين
+            </CardTitle>
             <Building2 className="h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.totalSuppliers}</div>
+            <div className="text-2xl font-bold">{totalSuppliers}</div>
             <p className="text-xs opacity-80">مورد مسجل</p>
           </CardContent>
         </Card>
@@ -38,18 +101,22 @@ export default function OverviewTab() {
             <FileText className="h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.totalContracts}</div>
+            <div className="text-2xl font-bold">{totalContracts}</div>
             <p className="text-xs opacity-80">عقد في النظام</p>
           </CardContent>
         </Card>
 
         <Card className="card-hover bg-linear-to-br from-orange-500 to-orange-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">القيمة الإجمالية</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              القيمة الإجمالية
+            </CardTitle>
             <DollarSign className="h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.totalValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {totalValue.toLocaleString()}
+            </div>
             <p className="text-xs opacity-80">ريال سعودي</p>
           </CardContent>
         </Card>
@@ -70,9 +137,9 @@ export default function OverviewTab() {
                   <span>العقود النشطة</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">{systemStats.activeContracts}</span>
+                  <span className="font-bold">{activeContracts}</span>
                   <Badge className="bg-green-100 text-green-800">
-                    {((systemStats.activeContracts / systemStats.totalContracts) * 100).toFixed(1)}%
+                    {((activeContracts / totalContracts) * 100).toFixed(1)}%
                   </Badge>
                 </div>
               </div>
@@ -82,9 +149,9 @@ export default function OverviewTab() {
                   <span>بانتظار الموافقة</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">{systemStats.pendingContracts}</span>
+                  <span className="font-bold">{pendingContracts}</span>
                   <Badge className="bg-blue-100 text-blue-800">
-                    {((systemStats.pendingContracts / systemStats.totalContracts) * 100).toFixed(1)}%
+                    {((pendingContracts / totalContracts) * 100).toFixed(1)}%
                   </Badge>
                 </div>
               </div>
@@ -94,9 +161,11 @@ export default function OverviewTab() {
                   <span>العقود المرفوضة</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">{systemStats.rejectedContracts}</span>
+                  <span className="font-bold">
+                    {systemStats.rejectedContracts}
+                  </span>
                   <Badge className="bg-red-100 text-red-800">
-                    {((systemStats.rejectedContracts / systemStats.totalContracts) * 100).toFixed(1)}%
+                    {((rejectedContracts / totalContracts) * 100).toFixed(1)}%
                   </Badge>
                 </div>
               </div>
@@ -111,24 +180,33 @@ export default function OverviewTab() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {allContracts.slice(0, 5).map((contract) => (
-                <div key={contract.id} className="flex items-center justify-between border-b pb-2">
+              {contracts.slice(0, 5).map((contract) => (
+                <div
+                  key={contract.id}
+                  className="flex items-center justify-between border-b pb-2"
+                >
                   <div>
-                    <p className="text-sm font-medium">{contract.retailerName}</p>
-                    <p className="text-xs text-gray-600">عقد مع {contract.supplierName}</p>
+                    <p className="text-sm font-medium">
+                      {getUserById(contract.retailer_id)?.full_name}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      عقد مع {getUserById(contract.supplier_id)?.full_name}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold">{contract.amount.toLocaleString()} ر.س</p>
+                    <p className="text-sm font-bold">
+                      {contract.amount.toLocaleString()} ر.س
+                    </p>
                     <Badge
                       className={
-                        contract.status === "نشط"
+                        contract.status === "active"
                           ? "bg-green-100 text-green-800"
-                          : contract.status === "بانتظار الموافقة"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-red-100 text-red-800"
+                          : contract.status === "pending"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-red-100 text-red-800"
                       }
                     >
-                      {contract.status}
+                      {translateContractStatus(contract.status)}
                     </Badge>
                   </div>
                 </div>
@@ -138,5 +216,5 @@ export default function OverviewTab() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

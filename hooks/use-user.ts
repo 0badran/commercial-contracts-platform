@@ -1,31 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "../lib/supabase/client";
-import { AuthError, User } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const useUser = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<AuthError | null>(null);
-
   const supabase = createClient();
+  const {
+    data,
+    error,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: ["user"],
+    queryFn: () => supabase.auth.getUser(),
+  });
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      setLoading(false);
-
-      setError(error);
-      setUser(user);
-    })();
-  }, [supabase]);
-
-  return { user, loading, error };
+  return { user: data?.data.user, loading, error };
 };
 
 export default useUser;

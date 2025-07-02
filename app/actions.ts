@@ -1,9 +1,13 @@
 "use server";
 
-import paths from "@/data/paths";
+import { PATHS } from "@/lib/constants";
 import CookieStore from "@/lib/cookies";
+import { adminAuthClient } from "@/lib/supabase/auth-admin";
 import { createClient } from "@/lib/supabase/server";
-import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
+import {
+  AdminUserAttributes,
+  SignUpWithPasswordCredentials,
+} from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -56,14 +60,14 @@ export async function signin(formData: {
 
   switch (formData.userType) {
     case "supplier":
-      revalidatePath(paths.dashboards.supplier);
-      redirect(paths.dashboards.supplier);
+      revalidatePath(PATHS.dashboards.supplier);
+      redirect(PATHS.dashboards.supplier);
     case "retailer":
-      revalidatePath(paths.dashboards.retailer);
-      redirect(paths.dashboards.retailer);
+      revalidatePath(PATHS.dashboards.retailer);
+      redirect(PATHS.dashboards.retailer);
     case "admin":
-      revalidatePath(paths.dashboards.admin);
-      redirect(paths.dashboards.admin);
+      revalidatePath(PATHS.dashboards.admin);
+      redirect(PATHS.dashboards.admin);
   }
 }
 
@@ -102,8 +106,12 @@ export async function signup(data: SignUpWithPasswordCredentials) {
       }
       return new Error(`Profile creation error: ${profileError.message}`);
     }
-    redirect(`${paths.auth.signin}?email=${userData.email}`);
+    redirect(`${PATHS.auth.signin}?email=${userData.email}`);
   }
+}
+export async function updateUserById(uid: string, attr: AdminUserAttributes) {
+  const res = await adminAuthClient.updateUserById(uid, attr);
+  return res;
 }
 
 export async function signout() {
@@ -112,5 +120,5 @@ export async function signout() {
   if (error) {
     return error;
   }
-  redirect(paths.auth.signin);
+  redirect(PATHS.auth.signin);
 }

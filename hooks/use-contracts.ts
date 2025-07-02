@@ -1,51 +1,34 @@
 "use client";
 
+import { ERROR_TYPES } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
-import { User } from "@supabase/supabase-js";
-import { useCallback, useEffect, useState } from "react";
+import { crazyToast } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import useUser from "./use-user";
 
 type Contract = Database["contract"];
 
-export function useContracts(haveContracts?: Contract[]) {
-  const [contracts, setContracts] = useState<Contract[]>(haveContracts || []);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function useContracts() {
   const supabase = createClient();
 
-  const fetchContracts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const {
+    data,
+    error,
+    refetch,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: ["contracts"],
+    queryFn: async () =>
+      await supabase
+        .from("contracts")
+        .select("*")
+        .order("created_at", { ascending: false }),
+  });
 
-    const { data, error: fetchError } = await supabase
-      .from("contracts")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const contracts: Database["contract"][] = data?.data || [];
 
-    setLoading(false);
+  const { user, loading: userLoading } = useUser();
 
-    if (fetchError) {
-      setError(fetchError.message);
-      return { data: [], error: fetchError };
-    }
-    setContracts(data || []);
-
-    // Fetch current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    setCurrentUser(user);
-    return { data: data || [], error: null };
-  }, [supabase]);
-
-  useEffect(() => {
-    if (!haveContracts) {
-      fetchContracts();
-    }
-  }, [fetchContracts, haveContracts]);
-
-  // Create
   const createContract = async (
     contract: Omit<Contract, "id" | "created_at" | "updated_at">
   ) => {
@@ -58,8 +41,7 @@ export function useContracts(haveContracts?: Contract[]) {
     if (insertError) {
       return { data: null, error: insertError };
     }
-
-    setContracts((prev) => (data ? [data, ...prev] : prev));
+    refetch();
     return { data, error: null };
   };
 
@@ -73,38 +55,50 @@ export function useContracts(haveContracts?: Contract[]) {
       .update(updates)
       .eq("id", id)
       .select()
-      .single();
+      .single<Contract>();
 
     if (updateError) {
       return { data: null, error: updateError };
     }
-
-    setContracts((prev) => prev.map((c) => (c.id === id && data ? data : c)));
+    refetch();
     return { data, error: null };
   };
 
+  const deleteContract = async (id: string) => {
+    const { error } = await supabase.from("contracts").delete().eq("id", id);
+    if (error) {
+      return crazyToast("حدث خطأ أثناء حذف العقد", "error");
+    }
+    refetch();
+    crazyToast("تم حذف العقد", "success");
+    return {
+      data: null,
+      error: null,
+    };
+  };
+
   const getCurrentUserContracts = () => {
-    if (!currentUser) {
-      return { data: null, error: new Error("حدث خطا في جلب العقود: User ID") };
+    if (userLoading) {
+      console.log("User Fetching...");
+      return { data: [], error: null };
     }
-
+    if (!user) {
+      console.error(ERROR_TYPES.USER_MISSING);
+      return { data: [], error: new Error("حدث خطا في جلب العقود") };
+    }
+    if (error) {
+      console.error(ERROR_TYPES.CONTRACTS_FETCH_ERROR, error);
+      return { data: [], error: new Error("حدث خطا في جلب العقود") };
+    }
     const data = contracts.filter(
-      (c) =>
-        c.supplier_id === currentUser.id || c.retailer_id === currentUser.id
+      (c) => c.supplier_id === user.id || c.retailer_id === user.id
     );
-
-    if (!data.length) {
-      return {
-        data: null,
-        error: new Error("حدث خطا في جلب العقود: Contracts List"),
-      };
-    }
     return { data, error: null };
   };
 
   const getContractsByUserId = (userId: string) => {
     if (!userId) {
-      return { data: null, error: new Error("حدث خطا في جلب العقود: User ID") };
+      return { data: [], error: new Error("حدث خطا في جلب العقود: User ID") };
     }
 
     const data = contracts.filter(
@@ -113,7 +107,7 @@ export function useContracts(haveContracts?: Contract[]) {
 
     if (!data.length) {
       return {
-        data: null,
+        data: [],
         error: new Error("حدث خطا في جلب العقود: Contracts List"),
       };
     }
@@ -121,14 +115,19 @@ export function useContracts(haveContracts?: Contract[]) {
     return { data, error: null };
   };
 
+  const getContractById = (id: string) => {
+    return contracts.find((c) => c.id === id) || null;
+  };
   return {
     contracts,
     loading,
     error,
-    fetchContracts,
+    refetch,
     createContract,
     updateContract,
+    deleteContract,
     getCurrentUserContracts,
     getContractsByUserId,
+    getContractById,
   };
 }

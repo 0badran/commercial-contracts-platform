@@ -29,8 +29,9 @@ import {
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { signup } from "../actions";
+import { isFormValidate } from "@/lib/utils";
 
-export default function RegisterPage() {
+export default function Signup() {
   const initialFormData = {
     commercialName: "",
     commercialIdentityNumber: "",
@@ -51,25 +52,13 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const isFormValidate = () =>
-    formData.commercialName &&
-    formData.commercialIdentityNumber &&
-    formData.businessType &&
-    formData.fullName &&
-    formData.phone &&
-    formData.email &&
-    formData.country &&
-    formData.city &&
-    formData.password &&
-    formData.confirmPassword;
-
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (formData.password.length < 6) {
       return setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
     }
-    if (!isFormValidate()) {
+    if (!isFormValidate(formData)) {
       if (formData.password !== formData.confirmPassword) {
         return setError("كلمتا المرور غير متطابقتين");
       }

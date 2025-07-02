@@ -128,3 +128,22 @@ INSERT INTO public.credit_ratings (
     12,
     1
 );
+
+UPDATE auth.users
+SET raw_user_meta_data = jsonb_build_object(
+  'id', u.id,
+  'email', u.email,
+  'full_name', u.full_name,
+  'user_type', u.user_type,
+  'commercial_name', u.commercial_name,
+  'commercial_identity_number', u.commercial_identity_number,
+  'business_type', u.business_type,
+  'phone', u.phone,
+  'phone2', u.phone2,
+  'country', u.country,
+  'city', u.city,
+  'email_verified', true,
+  'phone_verified', false
+)
+FROM public.users u
+WHERE u.id = auth.users.id;
