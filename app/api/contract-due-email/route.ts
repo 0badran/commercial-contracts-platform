@@ -27,7 +27,7 @@ export async function GET() {
         if (!retailer) return;
 
         await sendEmail({
-          to: `badran7299@yahoo.com`,
+          to: retailer.email,
           subject: "اشعار دفع",
           html: `
           <div>
@@ -42,6 +42,11 @@ export async function GET() {
       })
     );
   }
+  if (error) {
+    return Response.json(`Something went wrong, ERROR_CODE: ${status}`, {
+      status,
+    });
+  }
 
-  return Response.json({ data, error }, { status });
+  return Response.json(`Everything is OK, CODE: ${status}`, { status });
 }
