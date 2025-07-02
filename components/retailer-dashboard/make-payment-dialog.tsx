@@ -1,5 +1,6 @@
 "use client";
 
+import { sendEmail } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,11 +35,13 @@ interface MakePaymentButtonProps {
     id: string,
     contract: Contract
   ) => Promise<{ data: Contract | null; error: PostgrestError | null }>;
+  getUserById: (id: string) => Database["user"] | undefined;
 }
 export default function MakePaymentDialog({
   contract,
   createPayment,
   payments,
+  getUserById,
 }: MakePaymentButtonProps) {
   const initialValues = {
     amountType: "installment",
@@ -84,10 +87,21 @@ export default function MakePaymentDialog({
       return crazyToast("حدث خطا أثناء تاكيد الدفع", "error");
     }
     setTimeout(() => setOpen(false), 1000);
-    crazyToast("تم طلب تاكيد الدفع", "success");
-    setForm(initialValues);
+    crazyToast("تم طلب الدفع وفي انتظار الموافقه", "success");
     queryClient.invalidateQueries({ queryKey: ["contracts"] });
     queryClient.invalidateQueries({ queryKey: ["payments"] });
+    const retailer = getUserById(contract.retailer_id);
+    const supplier = getUserById(contract.supplier_id);
+    setForm(initialValues);
+    await sendEmail({
+      to: supplier?.email || "",
+      subject: "طلب تاكيد دفعه",
+      html: `<div>
+				<h3>تم طلب تاكيد دفعه خاصه بي <i>${retailer?.commercial_name}</i></h3>
+				<p>يمكنك تاكيد الدفعه من <a href="${process.env.NEXT_PUBLIC_ENDPOINT}"><strong>هنا</strong></a></p>
+				<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
+			</div>`,
+    });
   };
 
   return (

@@ -25,11 +25,17 @@ import CustomAlert from "../shared/custom-alert";
 import TableSkeleton from "../skeletons/table-skeleton";
 import revalidatePage from "@/services/revalidate-page";
 import { PATHS } from "@/lib/constants";
+import { sendEmail } from "@/app/actions";
 
 export default function PendingContractsTab() {
   const { getUserById } = useUsers();
-  const { updateContract, refetch, getCurrentUserContracts, loading } =
-    useContracts();
+  const {
+    updateContract,
+    getContractById,
+    refetch,
+    getCurrentUserContracts,
+    loading,
+  } = useContracts();
   const { data, error } = getCurrentUserContracts();
 
   if (loading) {
@@ -54,20 +60,28 @@ export default function PendingContractsTab() {
     status: Database["contract"]["status"]
   ) {
     const { error } = await updateContract(contractId, { status });
-    revalidatePage(PATHS.dashboards.supplier);
-    console.log({ error });
-
     if (error) {
       return crazyToast(
         `حدث خطأ أثناء تحديث حالة العقد: ${error.code}`,
         "error"
       );
     }
+    const trStatus = status === "active" ? "قبول" : "رفض";
     refetch();
-    crazyToast(
-      `تم ${status === "active" ? "قبول" : "رفض"} العقد بنجاح`,
-      "success"
-    );
+    crazyToast(`تم ${trStatus} العقد بنجاح`, "success");
+    revalidatePage(PATHS.dashboards.supplier);
+    const contract = getContractById(contractId);
+    const supplier = getUserById(contract?.supplier_id || "");
+    const retailer = getUserById(contract?.retailer_id || "");
+
+    await sendEmail({
+      to: retailer?.email || "",
+      subject: `تم ${trStatus} عقدك`,
+      html: `<div>
+				<h3>تم ${trStatus} العقد الخاص بي <i>${supplier?.commercial_name}</i></h3>
+				<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
+				</div>`,
+    });
   }
 
   return (

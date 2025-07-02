@@ -25,6 +25,7 @@ import TableSkeleton from "../skeletons/table-skeleton";
 import revalidatePage from "@/services/revalidate-page";
 import { PATHS } from "@/lib/constants";
 import { format } from "date-fns";
+import { sendEmail } from "@/app/actions";
 
 export default function PaymentsVerificationTab() {
   const { getUserById, currentUser } = useUsers();
@@ -72,17 +73,16 @@ export default function PaymentsVerificationTab() {
       payment_verification: status,
       status: status === "verified" ? (isOverdue ? "overdue" : "paid") : "due",
     });
+    const trStatus = status === "verified" ? "تأكيد" : "رفض";
 
     if (error) {
-      return crazyToast(
-        `حدث خطأ أثناء ${status === "verified" ? "تأكيد" : "رفض"} الدفعة`,
-        "error"
-      );
+      return crazyToast(`حدث خطأ أثناء ${trStatus} الدفعة`, "error");
     }
-    crazyToast(
-      `تم ${status === "verified" ? "تأكيد" : "رفض"} الدفعة بنجاح`,
-      "success"
-    );
+
+    // Send message to retailer
+    crazyToast(`تم ${trStatus} الدفعة بنجاح`, "success");
+    const retailer = getUserById(contract?.retailer_id || "");
+    const supplier = getUserById(contract?.supplier_id || "");
 
     // If payment success update contract
     if (status === "verified") {
@@ -100,14 +100,30 @@ export default function PaymentsVerificationTab() {
       if (isPaid) {
         updates.status = "completed";
         updates.paid_date = format(today, "yyyy-MM-dd");
+        await sendEmail({
+          to: retailer?.email || "",
+          subject: "تهانيا لقد تم تسديد عقدك!",
+          html: `<div>
+				<h3>تهانيا لقد تم تسديد العقد الخاص بي <i>${supplier?.commercial_name}</i></h3>
+				<p>يمكنك الاطلاع علي تفاصيل السداد في خانه السجل من خلال هذا المعرف: ${contract?.id}
+				<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
+				</div>`,
+        });
       } else {
         updates.due_date = format(newDueDate, "yyyy-MM-dd");
       }
-      const { data, error } = await updateContract(contract?.id || "", updates);
-      console.log({ data, error });
+      await updateContract(contract?.id || "", updates);
     }
     paymentsRefetch();
     revalidatePage(PATHS.dashboards.supplier);
+    await sendEmail({
+      to: retailer?.email || "",
+      subject: `تم ${trStatus} دفعتك`,
+      html: `<div>
+				<h3>تم ${trStatus} الدفعه الخاص بي <i>${supplier?.commercial_name}</i></h3>
+				<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
+				</div>`,
+    });
   }
 
   return (

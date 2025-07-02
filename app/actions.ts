@@ -4,25 +4,14 @@ import { PATHS } from "@/lib/constants";
 import CookieStore from "@/lib/cookies";
 import { adminAuthClient } from "@/lib/supabase/auth-admin";
 import { createClient } from "@/lib/supabase/server";
+import { translateRole } from "@/lib/utils";
 import {
   AdminUserAttributes,
   SignUpWithPasswordCredentials,
 } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-const translateUserType = (type: string): string => {
-  switch (type) {
-    case "supplier":
-      return "مورد";
-    case "retailer":
-      return "تاجر";
-    case "admin":
-      return "مدير";
-    default:
-      return type;
-  }
-};
+import nodemailer from "nodemailer";
 
 export async function signin(formData: {
   email: string;
@@ -52,7 +41,7 @@ export async function signin(formData: {
     const cookieStore = new CookieStore();
     cookieStore.delete("sb-zcbncnlhopnjihiqvxtl-auth-token");
     return {
-      message: `هذا الحساب مسجل كـ ${translateUserType(
+      message: `هذا الحساب مسجل كـ ${translateRole(
         userData?.user_type
       )}. الرجاء تحديد النوع الصحيح.`,
     };
@@ -109,6 +98,7 @@ export async function signup(data: SignUpWithPasswordCredentials) {
     redirect(`${PATHS.auth.signin}?email=${userData.email}`);
   }
 }
+
 export async function updateUserById(uid: string, attr: AdminUserAttributes) {
   const res = await adminAuthClient.updateUserById(uid, attr);
   return res;
@@ -121,4 +111,21 @@ export async function signout() {
     return error;
   }
   redirect(PATHS.auth.signin);
+}
+
+export async function sendEmail({ to, subject, html }: SendEmail) {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.NEXT_PUBLIC_SENDER,
+      pass: process.env.GOOGLE_APP_PASSWORD,
+    },
+  });
+
+  return transporter.sendMail({
+    from: "Commercial Contracts",
+    to,
+    subject,
+    html,
+  });
 }

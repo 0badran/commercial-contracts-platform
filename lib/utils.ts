@@ -111,6 +111,59 @@ function translateMonthToArabic(englishMonth: string) {
     monthsMap[englishMonth.trim() as keyof typeof monthsMap] || englishMonth
   );
 }
+type Props = {
+  receivedCommercialName: string;
+  name: string;
+  role: "retailer" | "supplier";
+  imgUrl?: string;
+  alt?: string;
+};
+function requestContractTemplate({
+  receivedCommercialName,
+  name,
+  role,
+  imgUrl,
+  alt,
+}: Props) {
+  imgUrl =
+    imgUrl || role === "supplier"
+      ? "https://raw.githubusercontent.com/0badran/commercial-contracts-platform/main/public/screenshots/rate-dangres.png"
+      : "https://raw.githubusercontent.com/0badran/commercial-contracts-platform/main/public/screenshots/payment-history.png";
+
+  alt = alt || role === "supplier" ? "منصة عقود المورد" : "منصة عقود التاجر";
+
+  if (role === "retailer") {
+    return `
+		<main dir="rtl">
+			<section>
+				<h1>تم ارسال عقدك</h1>
+				<h3>مرحبا, ${name}</h3>
+				<p>
+					ستصلك رسالة عند التاكيد من قبل: 
+					<strong><i>${receivedCommercialName}</i></strong>
+				</p>
+				<p>نشكرك للانضمام الي منصتنا</p>
+				<img src="${imgUrl}" width="80%" height="300" alt="${alt}" />
+			</section>
+			<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
+    </main>`;
+  }
+
+  return `
+	<main dir="rtl">
+		<section>
+			<h1>طلب تاكيد عقد</h1>
+			<h2>مرحبا, ${name}</h2>
+			<p>
+				تم ارسال عقد اليك من <strong><i>${receivedCommercialName}</i></strong> في انتظار الموافقه.
+			</p>
+			<p>يمكنك تسجيل الدخول من هنا<a href="${process.env.NEXT_PUBLIC_ENDPOINT}">اضغط هنا</a></p>
+			<p>نشكرك للانضمام الي منصتنا</p>
+			<img src="${imgUrl}" width="80%" height="300" alt="${alt}" />
+		</section>
+		<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
+  </main>`;
+}
 
 export {
   cn,
@@ -123,4 +176,5 @@ export {
   translateContractStatus,
   translateRole,
   translateMonthToArabic,
+  requestContractTemplate,
 };

@@ -79,7 +79,6 @@ export function useContracts() {
 
   const getCurrentUserContracts = () => {
     if (userLoading) {
-      console.log("User Fetching...");
       return { data: [], error: null };
     }
     if (!user) {

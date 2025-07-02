@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,12 +12,12 @@ import {
 } from "@/components/ui/table";
 import { useContracts } from "@/hooks/use-contracts";
 import { useUsers } from "@/hooks/use-users";
-import { Edit, Eye, Search } from "lucide-react";
+import { emptyCell } from "@/lib/utils";
+import { Search } from "lucide-react";
 import { useState } from "react";
 import CustomAlert from "../shared/custom-alert";
 import StatusBadge from "../shared/status-badge";
 import TableSkeleton from "../skeletons/table-skeleton";
-import { emptyCell } from "@/lib/utils";
 
 export default function ContractsTab() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,7 +71,7 @@ export default function ContractsTab() {
                 <TableHead>تاريخ الانتهاء</TableHead>
                 <TableHead>شروط الدفع</TableHead>
                 <TableHead>الحالة</TableHead>
-                <TableHead>الإجراءات</TableHead>
+                {/* <TableHead>الإجراءات</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -94,7 +93,7 @@ export default function ContractsTab() {
                     <TableCell>
                       <StatusBadge status={contract.status!} />
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <div className="flex space-x-2">
                         <Button size="sm" variant="outline">
                           <Eye className="h-4 w-4" />
@@ -103,7 +102,7 @@ export default function ContractsTab() {
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 );
               })}

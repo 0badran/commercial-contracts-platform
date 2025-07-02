@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { useContracts } from "@/hooks/use-contracts";
 import { useUsers } from "@/hooks/use-users";
+import { emptyCell } from "@/lib/utils";
 import { Edit, Eye, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import CustomAlert from "../shared/custom-alert";
@@ -21,6 +22,7 @@ import SignupForm from "../shared/signup-form";
 import TableSkeleton from "../skeletons/table-skeleton";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -138,9 +140,96 @@ export default function SuppliersTab() {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        {/* See button */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="w-sm md:w-lg overflow-y-scroll max-h-[98vh]">
+                            <DialogHeader>
+                              <DialogTitle>بيانات المورد</DialogTitle>
+                              <DialogDescription>
+                                كارت تقيم المورد
+                              </DialogDescription>
+                            </DialogHeader>
+                            {(() => {
+                              const { data } = getContractsByUserId(
+                                supplier.id!
+                              );
+                              const activeContracts = data.filter(
+                                (item) => item.status === "active"
+                              );
+                              const pendingContracts = data.filter(
+                                (item) => item.status === "pending"
+                              );
+                              const totalDues = activeContracts.reduce(
+                                (n, item) => n + item.amount,
+                                0
+                              );
+                              return (
+                                <main>
+                                  <section className="grid grid-cols-2 md:grid-cols-3 items-center gap-2">
+                                    <Card className="bg-gradient-to-br h-full from-green-50 to-green-100">
+                                      <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm text-green-800">
+                                          إجمالي العقود
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <div className="text-center">
+                                          <div className="text-2xl font-bold text-green-800">
+                                            {data.length}
+                                          </div>
+                                          <p className="text-xs text-green-800">
+                                            نشط:{" "}
+                                            {activeContracts.length ||
+                                              emptyCell}
+                                          </p>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+
+                                    <Card className="bg-gradient-to-br h-full from-orange-50 to-orange-100">
+                                      <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm text-orange-800">
+                                          اجمالي المستحقات
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <div className="text-center">
+                                          <div className="text-2xl font-bold text-orange-800">
+                                            {totalDues}
+                                          </div>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+
+                                    <Card className="bg-gradient-to-br h-full from-blue-50 to-blue-100">
+                                      <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm text-blue-800">
+                                          قيد المراجعه
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <div className="text-center">
+                                          <p className="text-2xl font-bold text-blue-800 mt-2">
+                                            {pendingContracts.length}
+                                          </p>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  </section>
+                                </main>
+                              );
+                            })()}
+                            <DialogClose asChild>
+                              <Button variant={"outline"}>إلغاء</Button>
+                            </DialogClose>
+                          </DialogContent>
+                        </Dialog>
+
                         <Button
                           onClick={() => {
                             setUserId(supplier.id!);

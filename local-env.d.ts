@@ -82,3 +82,9 @@ interface Database {
     updated_at?: string;
   };
 }
+
+interface SendEmail {
+  to: string;
+  subject: string;
+  html: string;
+}
