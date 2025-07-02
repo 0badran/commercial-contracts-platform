@@ -34,7 +34,7 @@ export async function updateSession(request: NextRequest) {
   // issues with users being randomly logged out.
 
   // IMPORTANT: DO NOT REMOVE auth.getUser()
-
+  const publicRoute = ["/", "/signup", "/forgot-password", "/reset-password"];
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -49,9 +49,8 @@ export async function updateSession(request: NextRequest) {
 
   if (
     user &&
-    (pathname === "/" ||
-      pathname === "/signup" ||
-      pathname !== `/dashboards/${userType}-dashboard`)
+    (publicRoute.some((route) => route === pathname) ||
+      !pathname.startsWith(`/dashboards/${userType}-dashboard`))
   ) {
     // user is logged in, redirect to the dashboard
     const url = request.nextUrl.clone();

@@ -81,7 +81,7 @@ export default async function SupplierDashboard() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs dir="rtl" defaultValue="retailers">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex md:inline-flex overflow-x-auto overflow-y-hidden">
             <TabsTrigger value="retailers" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               التجار والعقود

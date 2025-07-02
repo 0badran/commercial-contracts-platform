@@ -1,4 +1,10 @@
+import { sendEmail } from "@/app/actions";
+import { useUsers } from "@/hooks/use-users";
+import { isFormValidate, requestContractTemplate } from "@/lib/utils";
 import { Plus, Search, Store } from "lucide-react";
+import { FormEvent, useState } from "react";
+import CustomAlert from "../shared/custom-alert";
+import Spinner from "../shared/spinner";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -9,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import CustomAlert from "../shared/custom-alert";
+import { Input } from "../ui/input";
 import {
   Select,
   SelectContent,
@@ -17,12 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Input } from "../ui/input";
-import { useUsers } from "@/hooks/use-users";
-import { FormEvent, useState } from "react";
 import { Textarea } from "../ui/textarea";
-import Spinner from "../shared/spinner";
-import { isFormValidate } from "@/lib/utils";
 
 export default function CreateContractDialog({
   createContract,
@@ -36,15 +37,17 @@ export default function CreateContractDialog({
     loading: suppliersLoading,
     error: suppliersError,
     currentUser,
+    getUserById,
   } = useUsers();
-
-  const [newContract, setNewContract] = useState({
+  const initialForm = {
     amount: "",
     paymentTerms: "",
     description: "",
     numberOfPayments: "",
-  });
+  };
+  const [newContract, setNewContract] = useState(initialForm);
   const [supplierSearch, setSupplierSearch] = useState("");
+  const [open, setOpen] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
   const [contractsLoading, setContractsLoading] = useState(false);
   const [messages, setMessages] = useState<{
@@ -67,7 +70,6 @@ export default function CreateContractDialog({
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const { description, ...reset } = newContract;
-    console.log(isFormValidate(reset));
 
     if (!isFormValidate(reset)) {
       return setMessages({
@@ -81,6 +83,7 @@ export default function CreateContractDialog({
     const paymentTerms = Number(
       newContract.paymentTerms
     ) as Database["contract"]["payment_terms"];
+
     const { error } = await createContract({
       supplier_id: selectedSupplierId,
       retailer_id: currentUser?.id as string,
@@ -89,20 +92,55 @@ export default function CreateContractDialog({
       description: description,
       number_of_payments: numberOfPayments,
     });
+
     setContractsLoading(false);
+
     if (error) {
-      console.log("Error creating contract:", error);
       setMessages({ message: "حدث خطأ أثناء إضافة العقد.", stats: "error" });
       return;
     }
+
     refetch();
     setMessages({
       message: "تم إضافة العقد بنجاح.",
       stats: "success",
     });
+    setTimeout(() => {
+      setOpen(false);
+      setNewContract(initialForm);
+      setMessages(null);
+    }, 2000);
+    const supplier = getUserById(selectedSupplierId);
+    const retailer = currentUser?.user_metadata as Database["user"];
+    await Promise.all([
+      sendEmail({
+        to: currentUser?.email || "",
+        subject: "طلب تاكيد عقد",
+        html: requestContractTemplate({
+          name: retailer.full_name,
+          role: "retailer",
+          receivedCommercialName: supplier?.commercial_name || "",
+        }),
+      }),
+      sendEmail({
+        to: supplier?.email || "",
+        subject: "طلب تاكيد عقد",
+        html: requestContractTemplate({
+          name: supplier?.full_name || "",
+          receivedCommercialName: retailer.commercial_name,
+          role: "supplier",
+        }),
+      }),
+    ]);
   };
   return (
-    <Dialog onOpenChange={() => setMessages(null)}>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        setOpen(value);
+        setMessages(null);
+      }}
+    >
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />

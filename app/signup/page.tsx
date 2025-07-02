@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isFormValidate } from "@/lib/utils";
 import {
   ArrowLeft,
   Building2,
@@ -28,9 +29,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import PhoneInput from "react-phone-number-input";
+import ar from "react-phone-number-input/locale/ar";
 import { signup } from "../actions";
-import { isFormValidate } from "@/lib/utils";
+import { getCitiesByCountry, getCountries } from "country-city-multilanguage";
 
+type CountriesAndCities = {
+  label: string;
+  label_ar: string;
+  label_fr: string;
+};
 export default function Signup() {
   const initialFormData = {
     commercialName: "",
@@ -47,23 +55,29 @@ export default function Signup() {
   };
   const [userType, setUserType] = useState<"supplier" | "retailer">("supplier");
   const [formData, setFormData] = useState(initialFormData);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const countries: CountriesAndCities[] = getCountries();
+  const cities: CountriesAndCities[] = getCitiesByCountry(formData.country);
 
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    // eslint-disable-next-line
+    const { phone2, confirmPassword, ...reset } = formData;
+    if (!isFormValidate(reset)) {
+      return setError("الرجاء إدخال جميع البيانات المطلوبة");
+    }
+    if (isNaN(Number(formData.commercialIdentityNumber))) {
+      return setError("من فضلك ادخل ارقام فقط في رقم الهوية");
+    }
     if (formData.password.length < 6) {
       return setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
     }
-    if (!isFormValidate(formData)) {
-      if (formData.password !== formData.confirmPassword) {
-        return setError("كلمتا المرور غير متطابقتين");
-      }
-      return setError("الرجاء إدخال جميع البيانات المطلوبة");
+    if (formData.password !== formData.confirmPassword) {
+      return setError("كلمتا المرور غير متطابقتين");
     }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -245,7 +259,6 @@ export default function Signup() {
                             <SelectItem value="wholesale">
                               تجارة جملة
                             </SelectItem>
-                            <SelectItem value="other">أخرى</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -282,13 +295,17 @@ export default function Signup() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">الهاتف *</Label>
-                        <Input
-                          id="phone"
+                        <PhoneInput
+                          international
+                          defaultCountry="SA"
+                          initialValueFormat="national"
                           value={formData.phone}
-                          onChange={(e) =>
-                            updateFormData("phone", e.target.value)
+                          labels={ar}
+                          countryCallingCodeEditable={false}
+                          onChange={(value) =>
+                            updateFormData("phone", value as string)
                           }
-                          placeholder="05xxxxxxxx"
+                          placeholder="110xxxxxxxx"
                         />
                       </div>
                       <div className="space-y-2">
@@ -316,23 +333,15 @@ export default function Signup() {
                             <SelectValue placeholder="اختر الدولة" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="saudi-arabia">
-                              المملكة العربية السعودية
-                            </SelectItem>
-                            <SelectItem value="uae">
-                              الإمارات العربية المتحدة
-                            </SelectItem>
-                            <SelectItem value="kuwait">الكويت</SelectItem>
-                            <SelectItem value="qatar">قطر</SelectItem>
-                            <SelectItem value="bahrain">البحرين</SelectItem>
-                            <SelectItem value="oman">عمان</SelectItem>
-                            <SelectItem value="jordan">الأردن</SelectItem>
-                            <SelectItem value="lebanon">لبنان</SelectItem>
-                            <SelectItem value="egypt">مصر</SelectItem>
-                            <SelectItem value="other">أخرى</SelectItem>
+                            {countries.map((item, i) => (
+                              <SelectItem key={i} value={item.label}>
+                                {item.label_ar}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="city">المدينة *</Label>
                         <Select
@@ -345,18 +354,17 @@ export default function Signup() {
                             <SelectValue placeholder="اختر المدينة" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="riyadh">الرياض</SelectItem>
-                            <SelectItem value="jeddah">جدة</SelectItem>
-                            <SelectItem value="dammam">الدمام</SelectItem>
-                            <SelectItem value="mecca">مكة المكرمة</SelectItem>
-                            <SelectItem value="medina">
-                              المدينة المنورة
-                            </SelectItem>
-                            <SelectItem value="khobar">الخبر</SelectItem>
-                            <SelectItem value="taif">الطائف</SelectItem>
-                            <SelectItem value="tabuk">تبوك</SelectItem>
-                            <SelectItem value="abha">أبها</SelectItem>
-                            <SelectItem value="other">أخرى</SelectItem>
+                            {cities.length ? (
+                              cities.map((item, i) => (
+                                <SelectItem key={i} value={item.label}>
+                                  {item.label_ar}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <p className="text-sm text-center py-1">
+                                أختار دولة
+                              </p>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>

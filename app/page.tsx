@@ -82,6 +82,7 @@ export default function LoginPage({
           </CardHeader>
           <CardContent>
             <Tabs
+              dir="rtl"
               value={userType}
               onValueChange={(value) => setUserType(value as UserType)}
             >
@@ -144,6 +145,12 @@ export default function LoginPage({
                         })
                       }
                     />
+                    <Link
+                      href={"/forgot-password"}
+                      className="text-blue-600 hover:text-blue-700 underline"
+                    >
+                      نسيت كلمة المرور
+                    </Link>
                   </div>
                   {error && <CustomAlert message={error} variant="error" />}
 

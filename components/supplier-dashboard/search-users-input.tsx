@@ -110,7 +110,7 @@ export default function SearchUsersInput({
           </div>
         </CardContent>
       </Card>
-      <div className="space-y-2">
+      <div className="space-y-2 h-100 overflow-auto">
         {filteredUsers().map((retailer) => {
           const creditInfo = getCreditById(retailer.id!);
           const totalContracts = data.filter(
@@ -158,7 +158,6 @@ export default function SearchUsersInput({
             </div>
           );
         })}
-
         {filteredUsers().length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />

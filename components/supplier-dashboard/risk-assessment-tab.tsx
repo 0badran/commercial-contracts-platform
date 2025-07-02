@@ -109,12 +109,7 @@ export default function RiskAssessmentTab() {
             </CardHeader>
             <CardContent>
               {(() => {
-                const growthRate =
-                  retailerRate.contract_success_rate === null
-                    ? (50 / 100) * 5
-                    : (Math.min(retailerRate.contract_success_rate, 100) /
-                        100) *
-                      5;
+                const growthRate = (retailerRate.payment_score! / 100) * 5;
                 return (
                   <div className="space-y-6">
                     {/* Risk Score */}
@@ -215,15 +210,15 @@ export default function RiskAssessmentTab() {
                                   onTime > notOnTime
                                     ? "bg-green-100 text-green-800"
                                     : onTime === notOnTime
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-red-100 text-red-800"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-red-100 text-red-800"
                                 }
                               >
                                 {onTime > notOnTime
                                   ? "جيد"
                                   : onTime === notOnTime
-                                  ? "متوسط"
-                                  : "مقبول"}
+                                    ? "متوسط"
+                                    : "مقبول"}
                               </Badge>
                             </div>
 
@@ -237,8 +232,8 @@ export default function RiskAssessmentTab() {
                                   growthRate > 3
                                     ? "bg-green-100 text-green-800"
                                     : growthRate > 1.5
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-red-100 text-red-800"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-red-100 text-red-800"
                                 }
                               >
                                 {growthRate}/5

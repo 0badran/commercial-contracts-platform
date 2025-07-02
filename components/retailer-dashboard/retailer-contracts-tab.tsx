@@ -148,17 +148,8 @@ export default function ContractsTab() {
                                 contract={contract}
                                 payments={payments}
                                 updateContract={updateContract}
+                                getUserById={getUserById}
                               />
-                            );
-                          default:
-                            return (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => deleteContract(contract.id!)}
-                              >
-                                حذف
-                              </Button>
                             );
                         }
                       })()}

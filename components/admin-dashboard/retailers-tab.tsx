@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -15,7 +15,11 @@ import {
 import { useContracts } from "@/hooks/use-contracts";
 import { useCreditInfo } from "@/hooks/use-credit-info";
 import { useUsers } from "@/hooks/use-users";
-import { emptyCell, getCreditRatingColor } from "@/lib/utils";
+import {
+  emptyCell,
+  getCreditRatingColor,
+  translateRiskLevel,
+} from "@/lib/utils";
 import { Edit, Eye, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import CustomAlert from "../shared/custom-alert";
@@ -23,12 +27,14 @@ import SignupForm from "../shared/signup-form";
 import TableSkeleton from "../skeletons/table-skeleton";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
+import StatusBadge from "../shared/status-badge";
 
 export default function RetailersTab() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -149,9 +155,99 @@ export default function RetailersTab() {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        {/* See button */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="w-sm md:w-lg overflow-y-scroll max-h-[98vh]">
+                            <DialogHeader>
+                              <DialogTitle>بيانات التاجر</DialogTitle>
+                              <DialogDescription>
+                                كارت تقيم التاجر
+                              </DialogDescription>
+                            </DialogHeader>
+                            {(() => {
+                              const { data } = getContractsByUserId(
+                                retailer.id!
+                              );
+
+                              return (
+                                <main>
+                                  <section className="grid grid-cols-2 md:grid-cols-3 items-center gap-2">
+                                    <Card className="bg-gradient-to-br from-green-50 to-green-100">
+                                      <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm text-green-800">
+                                          إجمالي العقود
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <div className="text-center">
+                                          <div className="text-2xl font-bold text-green-800">
+                                            {data.length}
+                                          </div>
+                                          <p className="text-xs text-green-800">
+                                            نشط:{" "}
+                                            {creditInfo?.active_contracts ||
+                                              emptyCell}
+                                          </p>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+
+                                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
+                                      <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm text-orange-800">
+                                          نقاط السداد
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <div className="text-center">
+                                          <div className="text-2xl font-bold text-orange-800">
+                                            {creditInfo?.payment_score || 50}
+                                          </div>
+                                          <p className="text-xs text-orange-800">
+                                            من 100
+                                          </p>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+
+                                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+                                      <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm text-nowrap text-blue-800">
+                                          التصنيف الائتماني
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <div className="text-center">
+                                          <StatusBadge
+                                            type="credit"
+                                            status={
+                                              creditInfo?.credit_rating || "C"
+                                            }
+                                          />
+                                          <p className="text-xs text-blue-800 mt-2">
+                                            {translateRiskLevel(
+                                              creditInfo?.risk_level || "medium"
+                                            )}
+                                          </p>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  </section>
+                                </main>
+                              );
+                            })()}
+                            <DialogClose asChild>
+                              <Button variant={"outline"}>إلغاء</Button>
+                            </DialogClose>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* Edit button */}
                         <Button
                           onClick={() => {
                             setUserId(retailer.id!);
