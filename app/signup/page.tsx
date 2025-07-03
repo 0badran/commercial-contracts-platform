@@ -52,6 +52,7 @@ export default function Signup() {
     city: "",
     password: "",
     confirmPassword: "",
+    otherBusinessType: "",
   };
   const [userType, setUserType] = useState<"supplier" | "retailer">("supplier");
   const [formData, setFormData] = useState(initialFormData);
@@ -60,6 +61,7 @@ export default function Signup() {
   const [success, setSuccess] = useState<string | null>(null);
   const countries: CountriesAndCities[] = getCountries();
   const cities: CountriesAndCities[] = getCitiesByCountry(formData.country);
+  const [showOtherInput, setShowOtherInput] = useState(false);
 
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -81,6 +83,10 @@ export default function Signup() {
     setLoading(true);
     setError(null);
     setSuccess(null);
+    const businessType =
+      formData.businessType === "other"
+        ? formData.otherBusinessType
+        : formData.businessType;
     const errors = await signup({
       email: formData.email,
       password: formData.password,
@@ -90,7 +96,7 @@ export default function Signup() {
           user_type: userType,
           commercial_name: formData.commercialName,
           commercial_identity_number: formData.commercialIdentityNumber,
-          business_type: formData.businessType,
+          business_type: businessType,
           phone: formData.phone,
           phone2: formData.phone2,
           country: formData.country,
@@ -233,34 +239,42 @@ export default function Signup() {
                         </Label>
                         <Select
                           value={formData.businessType}
-                          onValueChange={(value) =>
-                            updateFormData("businessType", value)
-                          }
+                          onValueChange={(value) => {
+                            updateFormData("businessType", value);
+                            setShowOtherInput(value === "other");
+                          }}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger id="businessType">
                             <SelectValue placeholder="اختر نوع النشاط" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="retail-food">
-                              تجارة تجزئة - مواد غذائية
+                            <SelectItem value="مواد غذائية">
+                              مواد غذائية
                             </SelectItem>
-                            <SelectItem value="retail-electronics">
-                              تجارة تجزئة - أجهزة كهربائية
+                            <SelectItem value="أجهزة كهربائية">
+                              أجهزة كهربائية
                             </SelectItem>
-                            <SelectItem value="retail-clothing">
-                              تجارة تجزئة - ملابس
-                            </SelectItem>
-                            <SelectItem value="retail-furniture">
-                              تجارة تجزئة - أثاث
-                            </SelectItem>
-                            <SelectItem value="retail-general">
-                              تجارة تجزئة - عامة
-                            </SelectItem>
-                            <SelectItem value="wholesale">
-                              تجارة جملة
-                            </SelectItem>
+                            <SelectItem value="ملابس">ملابس</SelectItem>
+                            <SelectItem value="أثاث">أثاث</SelectItem>
+                            <SelectItem value="عامة">عامة</SelectItem>
+                            <SelectItem value="جملة">جملة</SelectItem>
+                            <SelectItem value="other">أخرى</SelectItem>
                           </SelectContent>
                         </Select>
+
+                        {showOtherInput && (
+                          <Input
+                            id="businessType"
+                            placeholder="اكتب نوع النشاط بنفس النمط"
+                            value={formData.otherBusinessType || ""}
+                            onChange={(e) =>
+                              updateFormData(
+                                "otherBusinessType",
+                                e.target.value
+                              )
+                            }
+                          />
+                        )}
                       </div>
                     </div>
                   </div>

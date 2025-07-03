@@ -2,13 +2,10 @@
 
 import { PATHS } from "@/lib/constants";
 import CookieStore from "@/lib/cookies";
-import { adminAuthClient } from "@/lib/supabase/auth-admin";
+import { admin } from "@/lib/supabase/auth-admin";
 import { createClient } from "@/lib/supabase/server";
 import { translateRole } from "@/lib/utils";
-import {
-  AdminUserAttributes,
-  SignUpWithPasswordCredentials,
-} from "@supabase/supabase-js";
+import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import nodemailer from "nodemailer";
@@ -99,8 +96,14 @@ export async function signup(data: SignUpWithPasswordCredentials) {
   }
 }
 
-export async function updateUserById(uid: string, attr: AdminUserAttributes) {
-  const res = await adminAuthClient.updateUserById(uid, attr);
+export async function updateUserById(uid: string, updates: any) {
+  const res = await admin.from("users").update(updates).eq("id", uid);
+  if (res.error) {
+    return res;
+  }
+  await admin.auth.admin.updateUserById(uid, {
+    user_metadata: updates,
+  });
   return res;
 }
 
