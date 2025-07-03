@@ -17,6 +17,15 @@ import {
 import { useUsers } from "@/hooks/use-users";
 import { isFormValidate, translateRole } from "@/lib/utils";
 import { CheckCircle, Edit, UserPlus } from "lucide-react";
+import PhoneInput from "react-phone-number-input";
+import ar from "react-phone-number-input/locale/ar";
+import { getCitiesByCountry, getCountries } from "country-city-multilanguage";
+
+type CountriesAndCities = {
+  label: string;
+  label_ar: string;
+  label_fr: string;
+};
 
 export default function SignupForm({
   userId,
@@ -29,6 +38,7 @@ export default function SignupForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { getUserById } = useUsers();
+  const [showOtherInput, setShowOtherInput] = useState(false);
 
   const user = getUserById(userId!);
 
@@ -44,6 +54,7 @@ export default function SignupForm({
     city: user?.city || "",
     password: "",
     confirmPassword: "",
+    otherBusinessType: "",
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -51,22 +62,27 @@ export default function SignupForm({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const countries: CountriesAndCities[] = getCountries();
+  const cities: CountriesAndCities[] = getCitiesByCountry(formData.country);
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // eslint-disable-next-line
+    const { email, confirmPassword, phone2, password, ...reset } = formData;
     if (!userId) {
-      if (!isFormValidate(formData)) {
+      if (!isFormValidate({ email, ...reset })) {
         return setError("الرجاء إدخال جميع البيانات المطلوبة");
       }
-      if (formData.password !== formData.confirmPassword) {
-        return setError("كلمتا المرور غير متطابقتين");
+      if (isNaN(Number(formData.commercialIdentityNumber))) {
+        return setError("من فضلك ادخل ارقام فقط في رقم الهوية");
       }
-      if (formData.password.length < 6) {
+      if (password.length < 6) {
         return setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       }
+      if (password !== confirmPassword) {
+        return setError("كلمتا المرور غير متطابقتين");
+      }
     } else {
-      // eslint-disable-next-line
-      const { email, confirmPassword, phone2, password, ...reset } = formData;
       if (!isFormValidate(reset)) {
         return setError("لايمكن ترك حقول فارغه");
       }
@@ -75,20 +91,23 @@ export default function SignupForm({
     setLoading(true);
     setError(null);
     setSuccess(null);
+    const businessType =
+      formData.businessType === "other"
+        ? formData.otherBusinessType
+        : formData.businessType;
 
     if (userId) {
       const { error } = await updateUserById(userId, {
-        user_metadata: {
-          full_name: formData.fullName,
-          commercial_name: formData.commercialName,
-          commercial_identity_number: formData.commercialIdentityNumber,
-          business_type: formData.businessType,
-          phone: formData.phone,
-          phone2: formData.phone2,
-          country: formData.country,
-          city: formData.city,
-        },
+        full_name: formData.fullName,
+        commercial_name: formData.commercialName,
+        commercial_identity_number: formData.commercialIdentityNumber,
+        business_type: businessType,
+        phone: formData.phone,
+        phone2: formData.phone2,
+        country: formData.country,
+        city: formData.city,
       });
+
       if (error) {
         return setError(
           `حدث خطا اثناء تحديث بيانات ${translateRole(userType)}`
@@ -96,6 +115,7 @@ export default function SignupForm({
       }
       return setSuccess("تم تحديث بيانات " + translateRole(userType));
     }
+
     const error = await signup({
       email: formData.email,
       password: formData.password,
@@ -115,7 +135,7 @@ export default function SignupForm({
     });
     setLoading(false);
     if (error) {
-      setError(error.message || "حدث خطا في انشاء الحساب");
+      return setError(error.message || "حدث خطا في انشاء الحساب");
     }
     setSuccess(
       "تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني لتأكيد الحساب."
@@ -125,14 +145,12 @@ export default function SignupForm({
 
   if (success) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-6">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <p className="text-gray-600 mb-6">{success}</p>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="w-full max-w-md text-center">
+        <CardContent className="pt-6">
+          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <p className="text-gray-600 mb-6">{success}</p>
+        </CardContent>
+      </Card>
     );
   }
   return (
@@ -171,31 +189,40 @@ export default function SignupForm({
             <Label htmlFor="businessType">نوع النشاط التجاري *</Label>
             <Select
               value={formData.businessType}
-              onValueChange={(value) => updateFormData("businessType", value)}
+              onValueChange={(value) => {
+                updateFormData("businessType", value);
+                setShowOtherInput(value === "other");
+              }}
             >
-              <SelectTrigger>
+              <SelectTrigger id="businessType">
                 <SelectValue placeholder="اختر نوع النشاط" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="retail-food">
-                  تجارة تجزئة - مواد غذائية
-                </SelectItem>
-                <SelectItem value="retail-electronics">
-                  تجارة تجزئة - أجهزة كهربائية
-                </SelectItem>
-                <SelectItem value="retail-clothing">
-                  تجارة تجزئة - ملابس
-                </SelectItem>
-                <SelectItem value="retail-furniture">
-                  تجارة تجزئة - أثاث
-                </SelectItem>
-                <SelectItem value="retail-general">
-                  تجارة تجزئة - عامة
-                </SelectItem>
-                <SelectItem value="wholesale">تجارة جملة</SelectItem>
+                <SelectItem value="مواد غذائية">مواد غذائية</SelectItem>
+                <SelectItem value="أجهزة كهربائية">أجهزة كهربائية</SelectItem>
+                <SelectItem value="ملابس">ملابس</SelectItem>
+                <SelectItem value="أثاث">أثاث</SelectItem>
+                <SelectItem value="عامة">عامة</SelectItem>
+                <SelectItem value="جملة">جملة</SelectItem>
+                {userId && formData.businessType !== "other" && (
+                  <SelectItem value={formData.businessType}>
+                    {formData.businessType}
+                  </SelectItem>
+                )}
                 <SelectItem value="other">أخرى</SelectItem>
               </SelectContent>
             </Select>
+
+            {showOtherInput && (
+              <Input
+                id="businessType"
+                placeholder="اكتب نوع النشاط بنفس النمط"
+                value={formData.otherBusinessType || ""}
+                onChange={(e) =>
+                  updateFormData("otherBusinessType", e.target.value)
+                }
+              />
+            )}
           </div>
         </div>
       </div>
@@ -227,11 +254,15 @@ export default function SignupForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">الهاتف *</Label>
-            <Input
-              id="phone"
+            <PhoneInput
+              international
+              defaultCountry="SA"
+              initialValueFormat="national"
               value={formData.phone}
-              onChange={(e) => updateFormData("phone", e.target.value)}
-              placeholder="05xxxxxxxx"
+              labels={ar}
+              countryCallingCodeEditable={false}
+              onChange={(value) => updateFormData("phone", value as string)}
+              placeholder="110xxxxxxxx"
             />
           </div>
           <div className="space-y-2">
@@ -255,21 +286,15 @@ export default function SignupForm({
                 <SelectValue placeholder="اختر الدولة" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="saudi-arabia">
-                  المملكة العربية السعودية
-                </SelectItem>
-                <SelectItem value="uae">الإمارات العربية المتحدة</SelectItem>
-                <SelectItem value="kuwait">الكويت</SelectItem>
-                <SelectItem value="qatar">قطر</SelectItem>
-                <SelectItem value="bahrain">البحرين</SelectItem>
-                <SelectItem value="oman">عمان</SelectItem>
-                <SelectItem value="jordan">الأردن</SelectItem>
-                <SelectItem value="lebanon">لبنان</SelectItem>
-                <SelectItem value="egypt">مصر</SelectItem>
-                <SelectItem value="other">أخرى</SelectItem>
+                {countries.map((item, i) => (
+                  <SelectItem key={i} value={item.label}>
+                    {item.label_ar}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="city">المدينة *</Label>
             <Select
@@ -280,16 +305,15 @@ export default function SignupForm({
                 <SelectValue placeholder="اختر المدينة" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="الرياض">الرياض</SelectItem>
-                <SelectItem value="jeddah">جدة</SelectItem>
-                <SelectItem value="الدمام">الدمام</SelectItem>
-                <SelectItem value="mecca">مكة المكرمة</SelectItem>
-                <SelectItem value="medina">المدينة المنورة</SelectItem>
-                <SelectItem value="khobar">الخبر</SelectItem>
-                <SelectItem value="taif">الطائف</SelectItem>
-                <SelectItem value="tabuk">تبوك</SelectItem>
-                <SelectItem value="abha">أبها</SelectItem>
-                <SelectItem value="other">أخرى</SelectItem>
+                {cities.length ? (
+                  cities.map((item, i) => (
+                    <SelectItem key={i} value={item.label}>
+                      {item.label_ar}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <p className="text-sm text-center py-1">أختار دولة</p>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -297,18 +321,7 @@ export default function SignupForm({
       </div>
 
       {/* Password Section */}
-      {userId ? (
-        <div className="space-y-2">
-          <Label htmlFor="password">تغير كلمة المرور</Label>
-          <Input
-            id="password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => updateFormData("password", e.target.value)}
-            placeholder="أدخل كلمة مرور قوية"
-          />
-        </div>
-      ) : (
+      {!userId && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
             كلمة المرور

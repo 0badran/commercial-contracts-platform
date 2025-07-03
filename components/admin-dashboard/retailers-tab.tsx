@@ -71,7 +71,7 @@ export default function RetailersTab() {
           <p className="text-gray-600">عرض وإدارة جميع التجار المسجلين</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger asChild onClick={() => setUserId(null)}>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               إضافة تاجر جديد
