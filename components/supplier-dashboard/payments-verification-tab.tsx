@@ -103,11 +103,11 @@ export default function PaymentsVerificationTab() {
         await sendEmail({
           to: retailer?.email || "",
           subject: "تهانيا لقد تم تسديد عقدك!",
-          html: `<div>
+          html: `
 				<h3>تهانيا لقد تم تسديد العقد الخاص بي <i>${supplier?.commercial_name}</i></h3>
 				<p>يمكنك الاطلاع علي تفاصيل السداد في خانه السجل من خلال هذا المعرف: ${contract?.id}
 				<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
-				</div>`,
+`,
         });
       } else {
         updates.due_date = format(newDueDate, "yyyy-MM-dd");
@@ -119,10 +119,10 @@ export default function PaymentsVerificationTab() {
     await sendEmail({
       to: retailer?.email || "",
       subject: `تم ${trStatus} دفعتك`,
-      html: `<div>
+      html: `
 				<h3>تم ${trStatus} الدفعه الخاص بي <i>${supplier?.commercial_name}</i></h3>
 				<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
-				</div>`,
+			`,
     });
   }
 

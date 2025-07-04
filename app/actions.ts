@@ -129,6 +129,10 @@ export async function sendEmail({ to, subject, html }: SendEmail) {
     from: "Commercial Contracts",
     to,
     subject,
-    html,
+    html: `
+		<div dir="rtl" class="*:text-right">
+			${html}
+		</div>
+		`,
   });
 }

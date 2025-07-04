@@ -30,13 +30,11 @@ export async function GET() {
           to: retailer.email,
           subject: "اشعار دفع",
           html: `
-          <div>
             <h1>مرحبا, ${retailer.full_name}</h1>
             <h3>باقي يوم علي الدفع</h3>
             <p>تاريخ استحقاق الدفعه يوم: <strong>${contract.due_date}</strong></p>
             <p>مبلغ الاستحقاق: <strong>${(contract.amount / contract.number_of_payments).toLocaleString()} ر.س</strong></p>
             <p>.فريق عمل منصة العقود يتمني لك النجاح</p>
-          </div>
         `,
         });
       })

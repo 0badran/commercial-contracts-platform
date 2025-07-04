@@ -134,7 +134,6 @@ function requestContractTemplate({
 
   if (role === "retailer") {
     return `
-		<main dir="rtl">
 			<section>
 				<h1>تم ارسال عقدك</h1>
 				<h3>مرحبا, ${name}</h3>
@@ -146,23 +145,22 @@ function requestContractTemplate({
 				<img src="${imgUrl}" width="80%" height="300" alt="${alt}" />
 			</section>
 			<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
-    </main>`;
+		`;
   }
 
   return `
-	<main dir="rtl">
 		<section>
 			<h1>طلب تاكيد عقد</h1>
 			<h2>مرحبا, ${name}</h2>
 			<p>
 				تم ارسال عقد اليك من <strong><i>${receivedCommercialName}</i></strong> في انتظار الموافقه.
 			</p>
-			<p>يمكنك تسجيل الدخول من هنا<a href="${process.env.NEXT_PUBLIC_ENDPOINT}">اضغط هنا</a></p>
+			<p>يمكنك تسجيل الدخول من <a href="${process.env.NEXT_PUBLIC_ENDPOINT}">هنا</a></p>
 			<p>نشكرك للانضمام الي منصتنا</p>
 			<img src="${imgUrl}" width="80%" height="300" alt="${alt}" />
 		</section>
 		<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
-  </main>`;
+	`;
 }
 
 export {
