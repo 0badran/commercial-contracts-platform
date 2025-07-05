@@ -155,7 +155,7 @@ export default function ContractsTab() {
                                 />
                                 <Button size={"sm"} variant={"outline"}>
                                   <Link
-                                    href={`${PATHS.dashboards.retailer}/printing?supplierId=${contract.supplier_id}`}
+                                    href={`${PATHS.dashboards.retailer}/printing?userId=${contract.supplier_id}`}
                                   >
                                     تجهيز تقرير
                                   </Link>

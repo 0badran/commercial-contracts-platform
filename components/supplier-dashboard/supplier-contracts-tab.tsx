@@ -37,8 +37,8 @@ export default function ContractsTab() {
     Database["user"] | null
   >(null);
 
-  const { data: contracts, error: contractsError } = getCurrentUserContracts();
-
+  const { data, error: contractsError } = getCurrentUserContracts();
+  const contracts = data.filter((c) => c.status !== "pending");
   const { data: retailers, error } = getUsersContractedWithCurrentUser(
     contracts!
   );
@@ -100,7 +100,7 @@ export default function ContractsTab() {
                 <Button size={"sm"} variant={"outline"}>
                   <Link
                     className="flex gap-1 items-center"
-                    href={`${PATHS.dashboards.supplier}/printing?retailerId=${selectedRetailer.id}`}
+                    href={`${PATHS.dashboards.supplier}/printing?userId=${selectedRetailer.id}`}
                   >
                     <Printer />
                     تجهيز تقرير
