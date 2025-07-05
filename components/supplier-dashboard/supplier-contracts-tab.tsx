@@ -18,7 +18,7 @@ import {
 import { useContracts } from "@/hooks/use-contracts";
 import { useCreditInfo } from "@/hooks/use-credit-info";
 import { useUsers } from "@/hooks/use-users";
-import { Eye, EyeOff, FileText } from "lucide-react";
+import { Eye, EyeOff, FileText, Printer } from "lucide-react";
 import { useState } from "react";
 import CustomAlert from "../shared/custom-alert";
 import EmptyState from "../shared/empty-state";
@@ -26,6 +26,9 @@ import SearchUsersInput from "./search-users-input";
 import StatusBadge from "../shared/status-badge";
 import TableSkeleton from "../skeletons/table-skeleton";
 import { emptyCell } from "@/lib/utils";
+import { Button } from "../ui/button";
+import Link from "next/link";
+import { PATHS } from "@/lib/constants";
 
 export default function ContractsTab() {
   const { getUsersContractedWithCurrentUser, loading } = useUsers();
@@ -34,8 +37,8 @@ export default function ContractsTab() {
     Database["user"] | null
   >(null);
 
-  const { data: contracts, error: contractsError } = getCurrentUserContracts();
-
+  const { data, error: contractsError } = getCurrentUserContracts();
+  const contracts = data.filter((c) => c.status !== "pending");
   const { data: retailers, error } = getUsersContractedWithCurrentUser(
     contracts!
   );
@@ -94,6 +97,15 @@ export default function ContractsTab() {
                   </CardTitle>
                   <CardDescription>العقود الحالية مع الموردين</CardDescription>
                 </div>
+                <Button size={"sm"} variant={"outline"}>
+                  <Link
+                    className="flex gap-1 items-center"
+                    href={`${PATHS.dashboards.supplier}/printing?userId=${selectedRetailer.id}`}
+                  >
+                    <Printer />
+                    تجهيز تقرير
+                  </Link>
+                </Button>
               </div>
             </CardHeader>
             <CardContent>

@@ -77,10 +77,10 @@ export default function PendingContractsTab() {
     await sendEmail({
       to: retailer?.email || "",
       subject: `تم ${trStatus} عقدك`,
-      html: `<div>
+      html: `
 				<h3>تم ${trStatus} العقد الخاص بي <i>${supplier?.commercial_name}</i></h3>
 				<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
-				</div>`,
+				`,
     });
   }
 

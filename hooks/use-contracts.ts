@@ -19,10 +19,7 @@ export function useContracts() {
   } = useQuery({
     queryKey: ["contracts"],
     queryFn: async () =>
-      await supabase
-        .from("contracts")
-        .select("*")
-        .order("created_at", { ascending: false }),
+      await supabase.from("contracts").select("*").order("status"),
   });
 
   const contracts: Database["contract"][] = data?.data || [];

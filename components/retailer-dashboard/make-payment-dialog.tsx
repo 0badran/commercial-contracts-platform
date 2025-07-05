@@ -96,11 +96,11 @@ export default function MakePaymentDialog({
     await sendEmail({
       to: supplier?.email || "",
       subject: "طلب تاكيد دفعه",
-      html: `<div>
+      html: `
 				<h3>تم طلب تاكيد دفعه خاصه بي <i>${retailer?.commercial_name}</i></h3>
 				<p>يمكنك تاكيد الدفعه من <a href="${process.env.NEXT_PUBLIC_ENDPOINT}"><strong>هنا</strong></a></p>
 				<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
-			</div>`,
+	`,
     });
   };
 

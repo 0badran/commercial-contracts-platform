@@ -28,6 +28,8 @@ import CreateContractDialog from "./create-contract-dialog";
 import EditContractDialog from "./edit-contract-dialog";
 import MakePaymentDialog from "./make-payment-dialog";
 import { usePayments } from "@/hooks/use-payments";
+import Link from "next/link";
+import { PATHS } from "@/lib/constants";
 
 export default function ContractsTab() {
   const { getUserById, loading, error: userError } = useUsers();
@@ -141,15 +143,24 @@ export default function ContractsTab() {
                                 </Button>
                               </>
                             );
-                          case "active":
+                          default:
                             return (
-                              <MakePaymentDialog
-                                createPayment={createPayment}
-                                contract={contract}
-                                payments={payments}
-                                updateContract={updateContract}
-                                getUserById={getUserById}
-                              />
+                              <div className="*:text-xs flex gap-x-1">
+                                <MakePaymentDialog
+                                  createPayment={createPayment}
+                                  contract={contract}
+                                  payments={payments}
+                                  updateContract={updateContract}
+                                  getUserById={getUserById}
+                                />
+                                <Button size={"sm"} variant={"outline"}>
+                                  <Link
+                                    href={`${PATHS.dashboards.retailer}/printing?userId=${contract.supplier_id}`}
+                                  >
+                                    تجهيز تقرير
+                                  </Link>
+                                </Button>
+                              </div>
                             );
                         }
                       })()}

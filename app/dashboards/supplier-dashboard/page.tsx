@@ -31,6 +31,7 @@ export default async function SupplierDashboard() {
 
   const supabase = await createClient();
 
+  // Fetch all contacts pending and payment pending verification
   const [contractsFetch, paymentsFetch] = await Promise.all([
     supabase
       .from("contracts")
@@ -51,9 +52,10 @@ export default async function SupplierDashboard() {
       .eq("payment_verification", "pending")
       .order("created_at", { ascending: false }),
   ]);
-  const { data: pendingContracts, error: contractError } = contractsFetch;
 
+  const { data: pendingContracts, error: contractError } = contractsFetch;
   const { data: pendingPayments, error: paymentError } = paymentsFetch;
+
   if (contractError || paymentError) {
     return <CustomAlert message="حدث خطأ ما!" Icon={XCircle} variant="error" />;
   }
