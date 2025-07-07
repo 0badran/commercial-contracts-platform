@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { systemStats } from "@/data/users";
 import { useContracts } from "@/hooks/use-contracts";
 import { useUsers } from "@/hooks/use-users";
 import { translateContractStatus } from "@/lib/utils";
@@ -161,9 +160,7 @@ export default function OverviewTab() {
                   <span>العقود المرفوضة</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">
-                    {systemStats.rejectedContracts}
-                  </span>
+                  <span className="font-bold">{rejectedContracts}</span>
                   <Badge className="bg-red-100 text-red-800">
                     {((rejectedContracts / totalContracts) * 100).toFixed(1)}%
                   </Badge>
@@ -202,8 +199,8 @@ export default function OverviewTab() {
                         contract.status === "active"
                           ? "bg-green-100 text-green-800"
                           : contract.status === "pending"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-red-100 text-red-800"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-red-100 text-red-800"
                       }
                     >
                       {translateContractStatus(contract.status)}

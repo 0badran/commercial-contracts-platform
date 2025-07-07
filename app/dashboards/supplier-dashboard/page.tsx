@@ -1,5 +1,4 @@
 import CustomAlert from "@/components/shared/custom-alert";
-import SignoutButton from "@/components/shared/signout-button";
 import TableSkeleton from "@/components/skeletons/table-skeleton";
 import CreditInfoTab from "@/components/supplier-dashboard/credit-info-tab";
 import PaymentsVerificationTab from "@/components/supplier-dashboard/payments-verification-tab";
@@ -11,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import getUser from "@/services/get-user";
 import { AlertCircle } from "lucide-react";
 
+import ProfileDropdown from "@/components/shared/profile-dropdown";
 import { createClient } from "@/lib/supabase/server";
 import {
   Building2,
@@ -76,7 +76,7 @@ export default async function SupplierDashboard() {
                 </p>
               </div>
             </div>
-            <SignoutButton />
+            <ProfileDropdown />
           </div>
         </div>
       </header>
@@ -121,7 +121,9 @@ export default async function SupplierDashboard() {
           </TabsList>
 
           <TabsContent value="retailers">
-            <ContractsTab />
+            <Suspense fallback={<TableSkeleton />}>
+              <ContractsTab />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="pending">
@@ -129,11 +131,15 @@ export default async function SupplierDashboard() {
           </TabsContent>
 
           <TabsContent value="risk">
-            <RiskAssessmentTab />
+            <Suspense fallback={<TableSkeleton />}>
+              <RiskAssessmentTab />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="credit">
-            <CreditInfoTab />
+            <Suspense fallback={<TableSkeleton />}>
+              <CreditInfoTab />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="payments">

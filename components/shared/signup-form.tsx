@@ -26,6 +26,15 @@ type CountriesAndCities = {
   label_ar: string;
   label_fr: string;
 };
+const businessTypes = [
+  { label: "مواد غذائية", value: "مواد غذائية" },
+  { label: "أجهزة كهربائية", value: "أجهزة كهربائية" },
+  { label: "ملابس", value: "ملابس" },
+  { label: "أثاث", value: "أثاث" },
+  { label: "عامة", value: "عامة" },
+  { label: "جملة", value: "جملة" },
+  { label: "اخري", value: "other" },
+];
 
 export default function SignupForm({
   userId,
@@ -64,12 +73,21 @@ export default function SignupForm({
 
   const countries: CountriesAndCities[] = getCountries();
   const cities: CountriesAndCities[] = getCitiesByCountry(formData.country);
-  const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
+
+  // Handle user profile update or create
+  const handleUserProfile = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // eslint-disable-next-line
     const { email, confirmPassword, phone2, password, ...reset } = formData;
+
+    // If the other option not choice keep other business type optional
+    if (formData.businessType !== "other") {
+      delete reset.otherBusinessType;
+    }
+
     if (!userId) {
+      // Create new user
       if (!isFormValidate({ email, ...reset })) {
         return setError("الرجاء إدخال جميع البيانات المطلوبة");
       }
@@ -83,6 +101,7 @@ export default function SignupForm({
         return setError("كلمتا المرور غير متطابقتين");
       }
     } else {
+      // Update exist user
       if (!isFormValidate(reset)) {
         return setError("لايمكن ترك حقول فارغه");
       }
@@ -154,7 +173,7 @@ export default function SignupForm({
     );
   }
   return (
-    <form onSubmit={handleRegister} className="space-y-6">
+    <form onSubmit={handleUserProfile} className="space-y-6">
       {/* Commercial Information Section */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
@@ -198,18 +217,21 @@ export default function SignupForm({
                 <SelectValue placeholder="اختر نوع النشاط" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="مواد غذائية">مواد غذائية</SelectItem>
-                <SelectItem value="أجهزة كهربائية">أجهزة كهربائية</SelectItem>
-                <SelectItem value="ملابس">ملابس</SelectItem>
-                <SelectItem value="أثاث">أثاث</SelectItem>
-                <SelectItem value="عامة">عامة</SelectItem>
-                <SelectItem value="جملة">جملة</SelectItem>
-                {userId && formData.businessType !== "other" && (
-                  <SelectItem value={formData.businessType}>
-                    {formData.businessType}
+                {businessTypes.map((item, i) => (
+                  <SelectItem key={i} value={item.value}>
+                    {item.label}
                   </SelectItem>
-                )}
-                <SelectItem value="other">أخرى</SelectItem>
+                ))}
+
+                {/* If no found business type in array create one */}
+                {userId &&
+                  !businessTypes.some(
+                    (item) => item.value === formData.businessType
+                  ) && (
+                    <SelectItem value={formData.businessType || "unknown"}>
+                      {formData.businessType}
+                    </SelectItem>
+                  )}
               </SelectContent>
             </Select>
 

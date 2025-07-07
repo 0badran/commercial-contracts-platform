@@ -1,6 +1,6 @@
 import StatsCards from "@/components/retailer-dashboard/stats-cards";
 import TabsContainer from "@/components/retailer-dashboard/tabs-container";
-import SignoutButton from "@/components/shared/signout-button";
+import ProfileDropdown from "@/components/shared/profile-dropdown";
 import StatsCardSkelton from "@/components/skeletons/stats-card-skelton";
 import getUser from "@/services/get-user";
 import { Store } from "lucide-react";
@@ -29,7 +29,7 @@ export default async function RetailerDashboard() {
                 </p>
               </div>
             </div>
-            <SignoutButton />
+            <ProfileDropdown />
           </div>
         </div>
       </header>
