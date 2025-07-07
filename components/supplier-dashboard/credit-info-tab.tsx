@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CheckCircle, CreditCard, EyeOff, XCircle } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { useContracts } from "@/hooks/use-contracts";
 import { useCreditInfo } from "@/hooks/use-credit-info";
@@ -31,13 +31,19 @@ import CustomAlert from "../shared/custom-alert";
 import EmptyState from "../shared/empty-state";
 import TableSkeleton from "../skeletons/table-skeleton";
 import SearchUsersInput from "./search-users-input";
+import { useSearchParams } from "next/navigation";
 
 export default function CreditInfoTab() {
-  const { getUsersContractedWithCurrentUser, loading } = useUsers();
-  const { getCurrentUserContracts } = useContracts();
+  const { getUsersContractedWithCurrentUser, loading, getUserById } =
+    useUsers();
+  const searchParams = useSearchParams();
+  const retailerId = searchParams.get("retailerId");
+  const initialRetailer = getUserById(retailerId!) || null;
   const [selectedRetailer, setSelectedRetailer] = useState<
     Database["user"] | null
-  >(null);
+  >(initialRetailer);
+
+  const { getCurrentUserContracts } = useContracts();
 
   const { data: contracts, error: contractsError } = getCurrentUserContracts();
   const { data: retailers, error } = getUsersContractedWithCurrentUser(
@@ -74,14 +80,16 @@ export default function CreditInfoTab() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-1">
-        <SearchUsersInput
-          title="قائمة التجار"
-          des="ابحث عن التاجر لعرض عقوده الحالية"
-          userType="retailer"
-          users={retailers}
-          getCreditById={getCreditById}
-          setSelectedRetailer={setSelectedRetailer}
-        />
+        <Suspense fallback={<TableSkeleton />}>
+          <SearchUsersInput
+            title="قائمة التجار"
+            des="ابحث عن التاجر لعرض التقيم الخاص به"
+            userType="retailer"
+            users={retailers}
+            getCreditById={getCreditById}
+            setSelectedRetailer={setSelectedRetailer}
+          />
+        </Suspense>
       </div>
 
       <div className="lg:col-span-2">

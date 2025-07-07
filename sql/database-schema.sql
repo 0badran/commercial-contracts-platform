@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   phone2 TEXT,
   country TEXT NOT NULL,
   city TEXT NOT NULL,
+	avatar_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );

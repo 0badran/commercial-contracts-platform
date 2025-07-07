@@ -1,6 +1,15 @@
 "use client";
+import { useContracts } from "@/hooks/use-contracts";
+import {
+  emptyCell,
+  getCreditRatingColor,
+  translateRiskLevel,
+} from "@/lib/utils";
 import { Search } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import RiskIcon from "../shared/risk-icon";
+import { Badge } from "../ui/badge";
 import {
   Card,
   CardContent,
@@ -16,14 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import {
-  emptyCell,
-  getCreditRatingColor,
-  translateRiskLevel,
-} from "@/lib/utils";
-import RiskIcon from "../shared/risk-icon";
-import { Badge } from "../ui/badge";
-import { useContracts } from "@/hooks/use-contracts";
 
 interface SearchUsersInputProps {
   title: string;
@@ -46,10 +47,11 @@ export default function SearchUsersInput({
   const [searchType, setSearchType] = useState<
     "full_name" | "commercial_identity_number"
   >("full_name");
+  const searchParams = useSearchParams();
+  const selectedRetailerId = searchParams.get("retailerId");
+
   const { getCurrentUserContracts } = useContracts();
-  const [selectedUser, setSelectedUser] = useState<Database["user"] | null>(
-    null
-  );
+  const router = useRouter();
   const { data } = getCurrentUserContracts();
   const filteredUsers = () => {
     return users.filter((user) => {
@@ -110,23 +112,23 @@ export default function SearchUsersInput({
           </div>
         </CardContent>
       </Card>
-      <div className="space-y-2 h-100 overflow-auto">
+      <div className="space-y-2 max-h-100 overflow-auto">
         {filteredUsers().map((retailer) => {
           const creditInfo = getCreditById(retailer.id!);
-          const totalContracts = data.filter(
-            (c) => c.retailer_id === retailer.id
+          const activeContracts = data.filter(
+            (c) => c.retailer_id === retailer.id && c.status === "active"
           ).length;
 
           return (
             <div
               key={retailer.id}
               className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
-                selectedUser?.id === retailer.id
+                selectedRetailerId === retailer.id
                   ? "border-primary bg-primary/5 shadow-xs"
                   : "border-border hover:border-border/80 hover:bg-accent/50"
               }`}
               onClick={() => {
-                setSelectedUser(retailer);
+                router.push(`?retailerId=${retailer.id}`);
                 setSelectedRetailer(retailer);
               }}
             >
@@ -134,7 +136,7 @@ export default function SearchUsersInput({
                 <div>
                   <h3 className="font-medium text-sm">{retailer.full_name}</h3>
                   <p className="text-xs text-gray-600 mt-1">
-                    عقود {totalContracts} •{" "}
+                    عقود {activeContracts} • مدفوع{" "}
                     {creditInfo?.paid_amount!.toLocaleString()} ر.س
                   </p>
                   <p className="text-xs text-gray-500">

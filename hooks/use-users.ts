@@ -24,32 +24,6 @@ export function useUsers() {
 
   const { user } = useUser();
 
-  // const createUser = async (user: UserInsert) => {
-  //   try {
-  //     const { data, error } = await supabase.from("users").insert(user).select().single()
-
-  //     if (error) throw error
-
-  //     setUsers((prev) => [data, ...prev])
-  //     return data
-  //   } catch (err) {
-  //     throw new Error(err instanceof Error ? err.message : "حدث خطأ في إنشاء المستخدم")
-  //   }
-  // }
-
-  // const updateUser = async (id: string, updates: UserUpdate) => {
-  //   try {
-  //     const { data, error } = await supabase.from("users").update(updates).eq("id", id).select().single()
-
-  //     if (error) throw error
-
-  //     setUsers((prev) => prev.map((user) => (user.id === id ? data : user)))
-  //     return data
-  //   } catch (err) {
-  //     throw new Error(err instanceof Error ? err.message : "حدث خطأ في تحديث المستخدم")
-  //   }
-  // }
-
   const getUsersByType = (userType: Database["user"]["user_type"]) => {
     return users.filter((user) => user.user_type === userType);
   };
@@ -76,8 +50,6 @@ export function useUsers() {
     users,
     loading,
     error,
-    // createUser,
-    // updateUser,
     currentUser: user,
     getUsersByType,
     refetch,

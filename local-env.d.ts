@@ -22,6 +22,7 @@ interface Database {
     phone2?: string | null;
     country: string;
     city: string;
+    avatar_url?: string;
     created_at?: string; // DEFAULT NOW()
     updated_at?: string; // DEFAULT NOW()
   };
