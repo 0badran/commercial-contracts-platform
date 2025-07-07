@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useContracts } from "@/hooks/use-contracts";
+import { usePayments } from "@/hooks/use-payments";
 import { useUsers } from "@/hooks/use-users";
 import { emptyCell, isUUID, translateRole } from "@/lib/utils";
 import { Printer } from "lucide-react";
@@ -24,6 +25,7 @@ export default function Printing() {
   const userId = searchParams.get("userId");
   const { getUserById } = useUsers();
   const { getCurrentUserContracts, error, loading } = useContracts();
+  const { payments } = usePayments({});
 
   if (loading) {
     return <TableSkeleton />;
@@ -68,10 +70,15 @@ export default function Printing() {
             <p>
               اسم {translateRole(user.user_type)}: {user?.full_name}
             </p>
-            <p>اجمالي العقود النشطه: {activeTotalAmount}</p>
-            <p>اجمالي العقود المكتمله: {completeTotalAmount}</p>
+            <p>اجمالي العقود النشطه: {activeTotalAmount.toLocaleString()}</p>
+            <p>
+              اجمالي العقود المكتمله: {completeTotalAmount.toLocaleString()}
+            </p>
             <p>عدد العقود: {contracts.length}</p>
-            <p>اجمالي العقود: {activeTotalAmount + completeTotalAmount}</p>
+            <p>
+              اجمالي العقود:{" "}
+              {(activeTotalAmount + completeTotalAmount).toLocaleString()}
+            </p>
           </div>
           <div className="">
             <Image
@@ -95,7 +102,8 @@ export default function Printing() {
           <TableHeader>
             <TableRow className="*:text-start">
               <TableHead>المبلغ</TableHead>
-              <TableHead>عدد الدفعات</TableHead>
+              <TableHead>اجمالي الدفعات</TableHead>
+              <TableHead>الدفعات المسدده</TableHead>
               <TableHead>تاريخ بداية العقد</TableHead>
               <TableHead>تاريخ نهاية العقد</TableHead>
               <TableHead>تاريخ الدفعه القادمة</TableHead>
@@ -107,6 +115,9 @@ export default function Printing() {
               <TableRow key={contract.id} className="h-10">
                 <TableCell>{contract.amount.toLocaleString()} ر.س</TableCell>
                 <TableCell>{contract.number_of_payments}</TableCell>
+                <TableCell>
+                  {payments.filter((p) => p.contract_id === contract.id).length}
+                </TableCell>
                 <TableCell>{contract.start_date || emptyCell}</TableCell>
                 <TableCell>{contract.end_date || emptyCell}</TableCell>
                 <TableCell>{contract.due_date || emptyCell}</TableCell>

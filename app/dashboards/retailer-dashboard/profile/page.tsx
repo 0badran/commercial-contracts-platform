@@ -17,7 +17,7 @@ export default async function Profile() {
         href={`/dashboards/${userData.user_type}_dashboard`}
         className="hover:underline absolute left-1/12 top-10 text-xl sm:text-2xl"
       >
-        رجوع
+        خروج
       </Link>
       <UserAvatar user={user} />
       <SignupForm userType="retailer" userId={user?.id} />

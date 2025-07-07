@@ -1,36 +1,37 @@
 "use client";
-import { updateUserById } from "@/app/actions";
+import { downloadImage, updateUserById } from "@/app/actions";
 import { createClient } from "@/lib/supabase/client";
 import { crazyToast } from "@/lib/utils";
 import { User } from "@supabase/supabase-js";
 import { Image as ImgLucide, LoaderCircle } from "lucide-react";
 import { ChangeEvent, useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Skeleton } from "../ui/skeleton";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function UserAvatar({ user }: { user: User }) {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    async function downloadImage(path: string) {
-      const { data, error: downloadError } = await supabase.storage
-        .from("avatars")
-        .download(path);
-
-      if (downloadError) {
-        return setError("حدث خطا اثناء تنزيل الصوره");
-      }
-
-      const url = URL.createObjectURL(data);
-      setAvatarUrl(url);
-    }
     const userAvatar = user.user_metadata.avatar_url as string;
     if (userAvatar) {
-      downloadImage(userAvatar);
+      (async () => {
+        setAvatarLoading(true);
+        const { data, error } = await downloadImage(userAvatar);
+        setAvatarLoading(false);
+        if (error) {
+          return;
+        }
+        const url = URL.createObjectURL(data);
+        setAvatarUrl(url);
+      })();
     }
-  }, [user, supabase]);
+  }, [user]);
 
   async function handleUserAvatar(event: ChangeEvent<HTMLInputElement>) {
     if (!event.target.files || event.target.files.length === 0) {
@@ -58,6 +59,7 @@ export default function UserAvatar({ user }: { user: User }) {
     crazyToast("تم رفع الصورة", "success");
     const url = URL.createObjectURL(file);
     setAvatarUrl(url);
+    queryClient.invalidateQueries({ queryKey: ["user"] });
   }
 
   const [first] = user.user_metadata.full_name.split(" ");
@@ -65,8 +67,14 @@ export default function UserAvatar({ user }: { user: User }) {
   return (
     <>
       <Avatar className="size-30 mx-auto relative overflow-hidden">
-        <AvatarImage className="object-cover" src={avatarUrl} />
-        <AvatarFallback>{first.slice(0, 2)}</AvatarFallback>
+        {avatarLoading ? (
+          <Skeleton className="size-30 rounded-full" />
+        ) : (
+          <>
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback>{first.slice(0, 2)}</AvatarFallback>
+          </>
+        )}
         <label
           htmlFor="single"
           className={`${uploading ? "cursor-default" : "cursor-pointer"} absolute z-1 text-center justify-center pt-2 text-white gap-1 text-xs flex bg-black/80 w-full h-1/3 bottom-0`}

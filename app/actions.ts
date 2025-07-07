@@ -136,3 +136,15 @@ export async function sendEmail({ to, subject, html }: SendEmail) {
 		`,
   });
 }
+
+export async function downloadImage(path: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.storage.from("avatars").download(path);
+
+  if (error) {
+    return { url: null, error };
+  }
+
+  return { data, error };
+}
