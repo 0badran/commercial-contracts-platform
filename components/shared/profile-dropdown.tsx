@@ -1,23 +1,42 @@
 "use client";
+import { downloadImage, signout } from "@/app/actions";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
-import { useTransition } from "react";
-import { signout } from "@/app/actions";
-import { usePathname } from "next/navigation";
 import useUser from "@/hooks/use-user";
-import { Skeleton } from "../ui/skeleton";
 import Error from "next/error";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { Skeleton } from "../ui/skeleton";
 
 export default function ProfileDropdown() {
   const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
   const { user, loading } = useUser();
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [avatarLoading, setAvatarLoading] = useState(false);
+
+  useEffect(() => {
+    const userAvatar = user?.user_metadata.avatar_url as string;
+    if (userAvatar) {
+      (async () => {
+        setAvatarLoading(true);
+        const { data, error } = await downloadImage(userAvatar);
+        setAvatarLoading(false);
+        if (error) {
+          return;
+        }
+        const url = URL.createObjectURL(data);
+        setAvatarUrl(url);
+      })();
+    }
+  }, [user]);
+
   if (loading) {
     return (
       <div className="flex gap-1 items-center">
@@ -39,10 +58,17 @@ export default function ProfileDropdown() {
         className="cursor-pointer disabled:brightness-50 disabled:cursor-not-allowed flex gap-1 items-center"
       >
         <Avatar>
-          <AvatarImage src={userData.avatar_url} />
-          <AvatarFallback>{first.slice(0, 2)}</AvatarFallback>
+          {avatarLoading ? (
+            <Skeleton className="size-10 rounded-full" />
+          ) : (
+            <>
+              <AvatarImage src={avatarUrl} />
+              <AvatarFallback>{first.slice(0, 2)}</AvatarFallback>
+            </>
+          )}
         </Avatar>
-        <span>مرحبا, {first}</span>
+
+        <span>مرحباً بك {first}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem asChild className="cursor-pointer">

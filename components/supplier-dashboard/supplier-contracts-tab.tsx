@@ -136,7 +136,7 @@ export default function ContractsTab() {
                         <TableCell>
                           {contract.amount.toLocaleString()} ر.س
                         </TableCell>
-                        <TableCell>{contract.payment_terms}</TableCell>
+                        <TableCell>كل {contract.payment_terms} يوم</TableCell>
                         <TableCell>
                           {contract.start_date || emptyCell}
                         </TableCell>

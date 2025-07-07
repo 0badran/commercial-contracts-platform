@@ -27,7 +27,6 @@ export default async function SupplierDashboard() {
   if (!user) {
     redirect("/", RedirectType.replace);
   }
-  const currentSupplier = user?.user_metadata as Database["user"];
 
   const supabase = await createClient();
 
@@ -72,7 +71,7 @@ export default async function SupplierDashboard() {
                   لوحة تحكم المورد
                 </h1>
                 <p className="text-sm text-gray-600">
-                  مرحباً بك {currentSupplier?.full_name.split(" ")[0]}
+                  إدارة عقودك التجارية والمدفوعات
                 </p>
               </div>
             </div>

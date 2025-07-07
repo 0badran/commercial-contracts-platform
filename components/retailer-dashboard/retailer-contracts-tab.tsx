@@ -87,7 +87,8 @@ export default function ContractsTab() {
                   <TableHead>المعرف</TableHead>
                   <TableHead>المورد</TableHead>
                   <TableHead>المبلغ</TableHead>
-                  <TableHead>عدد الدفعات</TableHead>
+                  <TableHead>اجمالي الدفعات</TableHead>
+                  <TableHead>الدفعات المسدده</TableHead>
                   <TableHead>تاريخ بداية العقد</TableHead>
                   <TableHead>تاريخ نهاية العقد</TableHead>
                   <TableHead>تاريخ الدفعه القادمة</TableHead>
@@ -116,6 +117,12 @@ export default function ContractsTab() {
                       {contract.amount.toLocaleString()} ر.س
                     </TableCell>
                     <TableCell>{contract.number_of_payments}</TableCell>
+                    <TableCell>
+                      {
+                        payments.filter((p) => p.contract_id === contract.id)
+                          .length
+                      }
+                    </TableCell>
                     <TableCell>{contract.start_date || emptyCell}</TableCell>
                     <TableCell>{contract.end_date || emptyCell}</TableCell>
                     <TableCell>{contract.due_date || emptyCell}</TableCell>
