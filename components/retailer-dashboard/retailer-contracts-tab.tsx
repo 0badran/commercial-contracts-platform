@@ -48,7 +48,7 @@ export default function ContractsTab() {
   return (
     <Card className="bg-card/50 backdrop-blur-xs border-border/50 shadow-lg">
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex gap-1 justify-between items-center">
           <div>
             <CardTitle>عقودي التجارية</CardTitle>
             <CardDescription>جميع العقود المسجلة في النظام</CardDescription>
@@ -152,7 +152,7 @@ export default function ContractsTab() {
                             );
                           default:
                             return (
-                              <div className="*:text-xs flex gap-x-1">
+                              <div className="*:text-xs flex gap-2">
                                 <MakePaymentDialog
                                   createPayment={createPayment}
                                   contract={contract}

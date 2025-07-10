@@ -142,8 +142,8 @@ export default function CreateContractDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button className="text-xs md:text-base px-2">
+          <Plus className="h-4 w-4" />
           إضافة عقد جديد
         </Button>
       </DialogTrigger>

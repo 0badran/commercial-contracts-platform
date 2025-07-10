@@ -33,7 +33,7 @@ export default function PaymentsVerificationTab() {
   const {
     loading: paymentLoading,
     payments,
-    refetch: paymentsRefetch,
+    refetch: refetchPayments,
     updatePayment,
     error: paymentError,
   } = usePayments({
@@ -44,7 +44,7 @@ export default function PaymentsVerificationTab() {
     loading: contractsLoading,
     error: contractsError,
     updateContract,
-    refetch: contractsRefetch,
+    refetch: refetchContracts,
   } = useContracts();
 
   if (paymentLoading || contractsLoading) {
@@ -62,32 +62,28 @@ export default function PaymentsVerificationTab() {
     status: "verified" | "rejected",
     contract: Database["contract"] | null
   ) {
-    // Calculate overdue paid
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dueDate = new Date(contract?.due_date || new Date());
-    dueDate.setHours(0, 0, 0, 0);
-    const isOverdue = today > dueDate;
-
-    const { error } = await updatePayment(paymentId, {
-      payment_verification: status,
-      status: status === "verified" ? (isOverdue ? "overdue" : "paid") : "due",
-    });
     const trStatus = status === "verified" ? "تأكيد" : "رفض";
-
-    if (error) {
-      return crazyToast(`حدث خطأ أثناء ${trStatus} الدفعة`, "error");
-    }
-
-    // Send message to retailer
-    crazyToast(`تم ${trStatus} الدفعة بنجاح`, "success");
     const retailer = getUserById(contract?.retailer_id || "");
     const supplier = getUserById(contract?.supplier_id || "");
 
-    // If payment success update contract
+    // If payment verified update contract and payment
     if (status === "verified") {
-      contractsRefetch();
+      // If contract overdue set payment status also overdue else is on time then set paid.
+      const { error } = await updatePayment(paymentId, {
+        payment_verification: status,
+        status: contract?.status === "overdue" ? "overdue" : "paid",
+      });
+
+      if (error) {
+        console.log({ error });
+
+        return crazyToast(`حدث خطأ أثناء ${trStatus} الدفعة`, "error");
+      }
+
+      crazyToast(`تم ${trStatus} الدفعة`, "success");
+
       const paymentTerms = contract!.payment_terms;
+      const today = new Date();
       const newDueDate = new Date(contract?.due_date || new Date());
       newDueDate.setDate(newDueDate.getDate() + paymentTerms);
       const paymentCount = payments.filter(
@@ -107,14 +103,17 @@ export default function PaymentsVerificationTab() {
 				<h3>تهانيا لقد تم تسديد العقد الخاص بي <i>${supplier?.commercial_name}</i></h3>
 				<p>يمكنك الاطلاع علي تفاصيل السداد في خانه السجل من خلال هذا المعرف: ${contract?.id}
 				<p>.فريق عمل منصة العقود يتمني لك النجاح</p>
-`,
+				`,
         });
       } else {
         updates.due_date = format(newDueDate, "yyyy-MM-dd");
+        updates.status = "active";
       }
-      await updateContract(contract?.id || "", updates);
+      await updateContract(contract?.id as string, updates);
+      // Refetch contracts after update it
+      refetchContracts();
     }
-    paymentsRefetch();
+    refetchPayments();
     revalidatePage(PATHS.dashboards.supplier);
     await sendEmail({
       to: retailer?.email || "",

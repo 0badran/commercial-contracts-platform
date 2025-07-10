@@ -102,6 +102,10 @@ export function usePayments({
     return payments.find((p) => p.id === id) || null;
   };
 
+  const getPaymentsByContractId = (contractId: string) => {
+    return payments.filter((p) => p.contract_id === contractId);
+  };
+
   return {
     payments,
     loading,
@@ -111,5 +115,6 @@ export function usePayments({
     updatePayment,
     deletePayment,
     getPaymentById,
+    getPaymentsByContractId,
   };
 }
