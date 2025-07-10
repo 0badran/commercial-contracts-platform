@@ -24,18 +24,10 @@ export default function StatsCards({ user }: { user: User | null }) {
   const { payments } = usePayments({ retailerId: user?.id });
 
   const totalPaid = payments
-    .filter((p) => p.status === "paid" && p.payment_verification === "verified")
+    .filter((p) => p.payment_verification === "verified")
     .reduce((sum, payment) => sum + (payment.amount_paid || 0), 0);
 
-  const overduePayments = payments.filter((p) => {
-    const dueDate = new Date(p.due_date);
-    const today = new Date();
-    return (
-      p.status === "due" &&
-      p.payment_verification === "verified" &&
-      dueDate < today
-    );
-  });
+  const overduePayments = contracts.filter((c) => c.status === "overdue");
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
