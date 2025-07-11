@@ -87,10 +87,7 @@ export async function signup(data: SignUpWithPasswordCredentials) {
     });
 
     if (profileError) {
-      if (profileError.details.includes("already exists.")) {
-        return new Error("هذا البريد الإلكتروني مسجل مسبقاً");
-      }
-      return new Error(`Profile creation error: ${profileError.message}`);
+      return profileError;
     }
     redirect(`${PATHS.auth.signin}?email=${userData.email}`);
   }

@@ -19,22 +19,15 @@ import { isFormValidate, translateRole } from "@/lib/utils";
 import { CheckCircle, Edit, UserPlus } from "lucide-react";
 import PhoneInput from "react-phone-number-input";
 import ar from "react-phone-number-input/locale/ar";
+// @ts-expect-error no have types
 import { getCitiesByCountry, getCountries } from "country-city-multilanguage";
+import { businessTypes } from "@/data";
 
 type CountriesAndCities = {
   label: string;
   label_ar: string;
   label_fr: string;
 };
-const businessTypes = [
-  { label: "مواد غذائية", value: "مواد غذائية" },
-  { label: "أجهزة كهربائية", value: "أجهزة كهربائية" },
-  { label: "ملابس", value: "ملابس" },
-  { label: "أثاث", value: "أثاث" },
-  { label: "عامة", value: "عامة" },
-  { label: "جملة", value: "جملة" },
-  { label: "اخري", value: "other" },
-];
 
 export default function SignupForm({
   userId,
@@ -83,6 +76,7 @@ export default function SignupForm({
 
     // If the other option not choice keep other business type optional
     if (formData.businessType !== "other") {
+      // @ts-expect-error ignore warning
       delete reset.otherBusinessType;
     }
 
@@ -217,11 +211,20 @@ export default function SignupForm({
                 <SelectValue placeholder="اختر نوع النشاط" />
               </SelectTrigger>
               <SelectContent>
-                {businessTypes.map((item, i) => (
-                  <SelectItem key={i} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
+                {businessTypes.map(({ value, label }) => {
+                  // translate business type value
+                  const trValue = `${translateRole(userType)} - ${value}`.slice(
+                    2
+                  );
+                  return (
+                    <SelectItem
+                      key={value}
+                      value={value === "other" ? value : trValue}
+                    >
+                      {value === "other" ? label : trValue}
+                    </SelectItem>
+                  );
+                })}
 
                 {/* If no found business type in array create one */}
                 {userId &&

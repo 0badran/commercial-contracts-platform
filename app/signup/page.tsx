@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { isFormValidate } from "@/lib/utils";
+import { isFormValidate, translateRole } from "@/lib/utils";
 import {
   ArrowLeft,
   Building2,
@@ -28,11 +28,13 @@ import {
   UserPlus,
 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import PhoneInput from "react-phone-number-input";
 import ar from "react-phone-number-input/locale/ar";
 import { signup } from "../actions";
+// @ts-expect-error no have types
 import { getCitiesByCountry, getCountries } from "country-city-multilanguage";
+import { businessTypes } from "@/data";
 
 type CountriesAndCities = {
   label: string;
@@ -67,12 +69,22 @@ export default function Signup() {
     e.preventDefault();
     // eslint-disable-next-line
     const { phone2, confirmPassword, ...reset } = formData;
+    // If the other option not choice keep other business type optional
+    if (formData.businessType !== "other") {
+      // @ts-expect-error ignore warning
+      delete reset.otherBusinessType;
+    }
     if (!isFormValidate(reset)) {
       return setError("الرجاء إدخال جميع البيانات المطلوبة");
     }
+
     if (isNaN(Number(formData.commercialIdentityNumber))) {
+      if (/\u0660-\u0669/.test(formData.commercialIdentityNumber)) {
+        return setError("من فضلك أدخل ارقم انجليزيه فقط");
+      }
       return setError("من فضلك ادخل ارقام فقط في رقم الهوية");
     }
+
     if (formData.password.length < 6) {
       return setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
     }
@@ -83,10 +95,6 @@ export default function Signup() {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    const businessType =
-      formData.businessType === "other"
-        ? formData.otherBusinessType
-        : formData.businessType;
     const errors = await signup({
       email: formData.email,
       password: formData.password,
@@ -96,7 +104,7 @@ export default function Signup() {
           user_type: userType,
           commercial_name: formData.commercialName,
           commercial_identity_number: formData.commercialIdentityNumber,
-          business_type: businessType,
+          business_type: formData.businessType,
           phone: formData.phone,
           phone2: formData.phone2,
           country: formData.country,
@@ -107,6 +115,9 @@ export default function Signup() {
     setLoading(false);
 
     if (errors) {
+      if (errors.code === "23505") {
+        return setError("البريد الالكتروني موجود بالفعل");
+      }
       return setError(errors.message || "حدث خطأ أثناء إنشاء الحساب");
     }
 
@@ -119,6 +130,9 @@ export default function Signup() {
   const updateFormData = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+  useEffect(() => {
+    updateFormData("businessType", "");
+  }, [userType]);
 
   if (success) {
     return (
@@ -212,7 +226,7 @@ export default function Signup() {
                           onChange={(e) =>
                             updateFormData("commercialName", e.target.value)
                           }
-                          placeholder="أدخل اسم السجل التجاري"
+                          placeholder="مثال: شركة السلام"
                         />
                       </div>
 
@@ -222,6 +236,7 @@ export default function Signup() {
                         </Label>
                         <Input
                           id="commercialIdentityNumber"
+                          type="number"
                           value={formData.commercialIdentityNumber}
                           onChange={(e) =>
                             updateFormData(
@@ -248,17 +263,21 @@ export default function Signup() {
                             <SelectValue placeholder="اختر نوع النشاط" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="مواد غذائية">
-                              مواد غذائية
-                            </SelectItem>
-                            <SelectItem value="أجهزة كهربائية">
-                              أجهزة كهربائية
-                            </SelectItem>
-                            <SelectItem value="ملابس">ملابس</SelectItem>
-                            <SelectItem value="أثاث">أثاث</SelectItem>
-                            <SelectItem value="عامة">عامة</SelectItem>
-                            <SelectItem value="جملة">جملة</SelectItem>
-                            <SelectItem value="other">أخرى</SelectItem>
+                            {businessTypes.map(({ value, label }) => {
+                              // translate business type value
+                              const trValue =
+                                `${translateRole(userType)} - ${value}`.slice(
+                                  2
+                                );
+                              return (
+                                <SelectItem
+                                  key={value}
+                                  value={value === "other" ? value : trValue}
+                                >
+                                  {value === "other" ? label : trValue}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
 
@@ -328,6 +347,7 @@ export default function Signup() {
                         </Label>
                         <Input
                           id="phone2"
+                          type="number"
                           value={formData.phone2}
                           onChange={(e) =>
                             updateFormData("phone2", e.target.value)
