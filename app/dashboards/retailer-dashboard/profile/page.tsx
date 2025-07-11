@@ -12,7 +12,7 @@ export default async function Profile() {
   }
   const userData = user.user_metadata as Database["user"];
   return (
-    <div className="max-w-md m-auto mt-7 space-y-5">
+    <div className="max-w-md m-auto mt-7 space-y-5 px-2">
       <Link
         href={`/dashboards/${userData.user_type}_dashboard`}
         className="hover:underline absolute left-1/12 top-10 text-xl sm:text-2xl"
