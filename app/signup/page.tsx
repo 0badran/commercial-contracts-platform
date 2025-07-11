@@ -79,7 +79,7 @@ export default function Signup() {
     }
 
     if (isNaN(Number(formData.commercialIdentityNumber))) {
-      if (/\u0660-\u0669/.test(formData.commercialIdentityNumber)) {
+      if (/^[\u0660-\u0669]+$/.test(formData.commercialIdentityNumber)) {
         return setError("من فضلك أدخل ارقم انجليزيه فقط");
       }
       return setError("من فضلك ادخل ارقام فقط في رقم الهوية");
@@ -236,7 +236,6 @@ export default function Signup() {
                         </Label>
                         <Input
                           id="commercialIdentityNumber"
-                          type="number"
                           value={formData.commercialIdentityNumber}
                           onChange={(e) =>
                             updateFormData(
